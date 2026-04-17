@@ -1,0 +1,27 @@
+[project]
+name = "snakes"
+version = "0.1.0"
+description = "Agent Runtime for Robots — Claude Code for Robotics"
+requires-python = ">=3.9"
+dependencies = [
+    "anthropic>=0.30.0",
+    "openai>=1.30.0",
+]
+
+[project.optional-dependencies]
+memkit = ["memkit"]
+ros2 = ["rclpy"]
+dev = ["pytest", "pytest-asyncio"]
+
+[project.scripts]
+snakes = "snakes.cli:main"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["snakes*", "scenarios*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
