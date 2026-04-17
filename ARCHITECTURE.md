@@ -195,30 +195,202 @@ User: "Find the key hidden in the room"
 | DDS Bridge | memkit-adapter-dds |
 | Tests | pytest, pytest-asyncio |
 
-## File Structure
+## File Structure (Target Monorepo)
 
 ```
 snakes-1.0/
 ├── ARCHITECTURE.md
+├── MERGE_PLAN.md             # path to consolidate sub-projects
 ├── pyproject.toml
-├── snakes/
-│   ├── __init__.py      # Exports
-│   ├── agent.py         # Stateful Agent class
-│   ├── loop.py          # Core agent loop (Pi port)
-│   ├── types.py         # Type definitions
-│   ├── context.py       # Context assembly
-│   ├── tools.py         # Robot CLI → Agent tools
-│   ├── robot_md.py      # ROBOT.md management
-│   ├── llm_client.py    # Anthropic/OpenAI client
-│   ├── memory_bridge.py # memkit integration
-│   └── cli.py           # Entry point
-├── scenarios/
-│   ├── escape_room.py   # Room/puzzle engine
-│   ├── x2_mock.py       # X2 mock for hackathon
-│   └── scoring.py       # Hackathon scoring
+│
+├── snakes/                   # Agent Runtime core
+│   ├── agent.py, loop.py, types.py
+│   ├── context.py, tools.py
+│   ├── robot_md.py, llm_client.py
+│   ├── memory_bridge.py
+│   └── cli.py
+│
+├── sdk2cli/                  # [merged from sdk2cli-registry]
+│   ├── robot_cli_core/
+│   └── robots/               # 37 robots
+│
+├── memkit/                   # [merged from zengury/memory]
+│   ├── layers/               # Reflex, Semantic, Quarantine, Fleet, Safety
+│   ├── critic/               # RuleBased + LLM critic
+│   └── learner.py            # learns from EventLog
+│
+├── mcp/                      # [merged from zengury/mcp-ros-diagnosis]
+│   ├── servers/              # manastone-joints, -power, -imu, ...
+│   ├── eventlog/             # UNIFIED event log (replaces Episodic too)
+│   ├── schema/               # robot_schema.yaml
+│   └── bridge/               # DDS ↔ EventLog
+│
+├── scenarios/                # [merged from cli-enhanced]
+│   ├── escape_room/
+│   ├── retail/               # future
+│   └── scoring.py
+│
+├── gateway/                  # future: LLM auth + multi-model
+│
+├── scripts/
+│   └── export_dataset.py     # EventLog → VLA training set
+│
 └── tests/
-    ├── conftest.py
-    ├── test_loop.py
-    ├── test_tools.py
-    └── test_scenario.py
 ```
+
+---
+
+## The Data Flywheel (Grand Strategy)
+
+The terminal goal is not a working runtime — it's the world's largest cognitive-physical aligned dataset, and a VLA trained on it.
+
+```
+1,000s of deployed Snakes robots run tasks
+    │
+    ├── sdk2cli   → command events    ┐
+    ├── snakes    → cognitive events  ├── EventLog (unified)
+    └── mcp       → physical events   ┘
+                                       │
+                                       ▼
+                              memkit Critic Pipeline
+                                       │
+                    ┌──────────────────┴──────────────────┐
+                    │                                     │
+             Success → Semantic                    Failure → annotated
+             (as reusable skill)              (phenomenon + reason)
+                    │                                     │
+                    └──────────────┬──────────────────────┘
+                                   │
+                                   ▼
+                    scripts/export_dataset.py
+                                   │
+                                   ▼
+                    Training corpus (LeRobot / RLDS / custom)
+                    - trajectory + torque + IMU (500Hz)
+                    - task labels
+                    - reasoning chains
+                    - success/failure labels
+                    - environment context
+                                   │
+                                   ▼
+                       Train VLA (π0/OpenVLA/RT-2-like)
+                                   │
+                                   ▼
+                    Deploy VLA as `skill.vla` in sdk2cli
+                                   │
+                                   ▼
+                         flywheel spins faster
+```
+
+**Why this dataset is unique:**
+- Google/Nvidia: trajectories but no reasoning chains
+- OpenAI/Anthropic: reasoning but no physical trajectories
+- **Snakes: both, aligned at millisecond resolution, from real deployments**
+
+---
+
+## Unified EventLog (Replaces Episodic + EventLog)
+
+One canonical append-only stream. Written by mcp (physical), snakes agent loop (cognitive), and sdk2cli (commands). Read by memkit.Critic for learning and scripts/export_dataset.py for VLA training.
+
+```python
+@dataclass
+class EventLogEntry:
+    ts: str                # ISO-8601 UTC with ms
+    seq: int               # monotonic per daemon session
+    robot_id: str
+    task_id: str | None    # optional task grouping
+    
+    # Classification
+    source: Literal["physical", "cognitive", "safety", "command"]
+    severity: Literal["info", "warn", "critical"]
+    tags: list[str]
+    
+    # Physical (from mcp/)
+    physical: dict | None  # {joints: [...], torque: [...], imu: {...}, temps: {...}}
+    
+    # Cognitive (from snakes agent loop)
+    cognitive: dict | None  # {reasoning: "...", tool_call: {...}, tool_result: {...}}
+    
+    # Command (from sdk2cli)
+    command: dict | None    # {cmd: "walk", args: {...}, executor: "daemon"}
+    
+    # Outcome (added when task ends)
+    outcome: Literal["success", "failure", "partial"] | None
+    failure_reason: str | None       # e.g. "grasp_slipped"
+    failure_phenomenon: str | None   # e.g. "object fell from gripper at 3cm lift"
+```
+
+Full spec in `docs/EVENTLOG_SCHEMA.md`.
+
+**Key design:** Physical and cognitive events share `task_id` and timestamps, so memkit can automatically align reasoning chains with joint trajectories. No post-hoc join needed. This is the property that makes the exported dataset unique.
+
+---
+
+## memkit's New Role (Learning, Not Storage)
+
+With EventLog taking over raw log storage, memkit focuses on:
+
+1. **Critic Pipeline** — reads EventLog, decides what becomes skill
+2. **Semantic layer** — consolidated, queryable knowledge
+3. **Quarantine** — holding tank for new experiences pending review
+4. **Fleet** — cross-robot validated knowledge broadcast
+5. **Safety** — hardcoded rules + rules promoted from recurring failures
+6. **Reflex** — real-time sensor snapshots (unchanged)
+
+The old `Episodic` layer is replaced by a **view** over EventLog:
+
+```python
+# Before:
+memory.episodic.get_recent(n=20)
+
+# After:
+eventlog.query(task_id=current_task, limit=20)
+```
+
+---
+
+## Success/Failure Semantics
+
+**Success path** (promotes knowledge):
+```
+Task completes → EventLog entries marked outcome="success" 
+→ Critic extracts: trajectory + reasoning + environment
+→ If novel and repeatable → Quarantine (24h holding)
+→ If still holds after review → Semantic (becomes skill)
+→ If K fleet-members confirm → Fleet (broadcast)
+```
+
+**Failure path** (preserves data):
+```
+Task fails → EventLog entries marked outcome="failure"
+→ Critic demands phenomenon + reason annotations:
+   phenomenon: "瓶身从指尖滑落 5cm"
+   reason: "grasp pose too low"
+   physical_context: <joint + torque snapshot>
+   cognitive_context: <reasoning chain that led here>
+→ Data retained as VLA training signal
+→ If recurring → propose new Safety rule
+```
+
+**This is why failures are assets, not bugs.** Every failure is annotated, preserved, and contributes to either:
+- Next attempt's plan (via memkit.Semantic query)
+- Future VLA training (via dataset export)
+- New Safety rule (via recurrence detection)
+
+---
+
+## Current Status
+
+- [x] snakes/ — Agent runtime core, 20/20 tests passing
+- [x] sdk2cli-registry — separate repo, ready to merge
+- [x] memkit (memory repo) — separate repo, ready to merge
+- [x] mcp-ros-diagnosis — separate repo, ready to merge
+- [x] cli-enhanced — separate repo, ready to merge
+- [ ] Monorepo consolidation (see MERGE_PLAN.md)
+- [ ] Unified EventLog implementation
+- [ ] scripts/export_dataset.py
+- [ ] First real robot run
+- [ ] First learned skill promoted Semantic → reused
+
+See `MERGE_PLAN.md` for the step-by-step consolidation plan.
