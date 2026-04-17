@@ -34,10 +34,10 @@ class RobotTool:
 
 
 class SafetyError(Exception):
-    def __init__(self, message: str, command: str, args: dict[str, Any]):
+    def __init__(self, message: str, command: str, tool_args: dict[str, Any]):
         super().__init__(message)
         self.command = command
-        self.args = args
+        self.tool_args = tool_args
 
 
 @dataclass
