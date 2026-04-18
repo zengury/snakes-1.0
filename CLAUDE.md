@@ -4,7 +4,7 @@
 
 "Claude Code for Robotics" — a runtime that lets LLM agents run on robot hardware. Turns a skilled robot into a cognitive robot that knows who it is, learns by doing, consolidates skills, and has memory.
 
-**Terminal goal**: accumulate the world's largest cognitive-physical aligned dataset through deployed robots, then train the best VLA on it.
+**Terminal goal**: accumulate the world's largest cognitive-physical aligned dataset through deployed robots, then train the best robot foundation model on it.
 
 ## Architecture (5 modules in monorepo)
 
@@ -45,7 +45,7 @@ This dataset is unique because it aligns physical trajectories with reasoning ch
 | `zengury/memory` | memkit 6-layer memory | To merge (Week 1-2 of MERGE_PLAN) |
 | `zengury/mcp-ros-diagnosis` | MCP diagnostic servers + EventLog | To merge (Week 1) |
 | `zengury/sdk2cli` | CLI for 37 robots | To merge (Week 1) |
-| `zengury/cli-enhanced` | Hackathon escape room | Already ported to scenarios/ |
+| `zengury/cli-enhanced` | tools from vla training dataset and Hackathon escape room | Already ported to scenarios/ |
 | `zengury/snakes-pi-platform` | Pi agent loop reference | Architecture ported to snakes/loop.py |
 
 ## Target Robot
