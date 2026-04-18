@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from snakes.tools import RobotTool, SafetyError, parse_manifest_tools
-from snakes.robot_md import RobotIdentity, load_robot_md, render_robot_md, update_robot_md
+from snakes.robot_md import load_robot_md, assemble_prompt, add_learned_skill
 from tests.conftest import MockExecutor
 
 
@@ -59,15 +59,19 @@ async def test_safety_error(mock_executor: MockExecutor):
 
 def test_robot_md_load(sample_robot_md: Path):
     identity = load_robot_md(sample_robot_md)
-    assert identity.name == "X2-Alpha"
-    assert identity.type == "humanoid"
-    assert identity.dof == 36
+    assert identity.robot_id == "x2-alpha"
+    assert identity.model == "X2"
+    assert identity.manufacturer == "agibot"
+    assert identity.current_role == "hackathon"
 
 
-def test_robot_md_update(sample_robot_md: Path):
+def test_robot_md_add_skill(sample_robot_md: Path):
+    add_learned_skill(sample_robot_md, "grasp-cup", "2026-04-17", 85.0)
+
+    text = sample_robot_md.read_text()
+    assert "grasp-cup" in text
+    assert "85%" in text
+    assert "暂无习得技能" not in text
+
     identity = load_robot_md(sample_robot_md)
-    identity.learned_skills = ["pick_up_cup"]
-    update_robot_md(sample_robot_md, identity)
-
-    reloaded = load_robot_md(sample_robot_md)
-    assert "pick_up_cup" in reloaded.learned_skills
+    assert identity.learned_skills_count == 1
