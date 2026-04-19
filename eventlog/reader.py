@@ -6,7 +6,7 @@ import io
 from pathlib import Path
 from typing import Any, Iterator, Optional
 
-from mcp.eventlog.schema import EventLogEntry, Outcome, Source
+from eventlog.schema import EventLogEntry, Outcome, Source
 
 
 class EventLogReader:

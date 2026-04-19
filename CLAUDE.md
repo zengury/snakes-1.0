@@ -6,14 +6,26 @@
 
 **Terminal goal**: accumulate the world's largest cognitive-physical aligned dataset through deployed robots, then train the best VLA on it.
 
-## Architecture (5 modules in monorepo)
+## Architecture (3-layer monorepo)
 
+### Skeleton (Agent Runtime Core, scenario-agnostic)
 ```
 snakes/    — Agent loop (Python port of Pi's agent-loop.ts)
 sdk2cli/   — CLI + daemon + manifest for 37 robots (to be merged)
 memkit/    — 6-layer memory + critic pipeline (to be merged from zengury/memory)
-mcp/       — Diagnostic servers + unified EventLog (to be merged from zengury/mcp-ros-diagnosis)
-scenarios/ — Hackathon escape room (3 levels)
+eventlog/  — Unified event log (physical + cognitive + command)
+roles/     — Role overlays (hackathon.md, barista.md, ...)
+```
+
+### Training Method (vla2cli)
+```
+vla2cli/   — Extract from VLA datasets → CLI commands / LLM fine-tune data
+```
+
+### Applications
+```
+apps/diagnosis/ — Robot maintenance CLI (to be merged from zengury/mcp-ros-diagnosis)
+apps/hackathon/ — Escape room scenarios (3 levels + scoring)
 ```
 
 ## Key Design Decisions (DO NOT VIOLATE)

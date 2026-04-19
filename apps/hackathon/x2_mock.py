@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from scenarios.escape_room import EscapeRoom, RoomObject
+from apps.hackathon.escape_room import EscapeRoom, RoomObject
 
 
 @dataclass

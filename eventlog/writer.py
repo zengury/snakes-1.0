@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from mcp.eventlog.schema import EventLogEntry, Outcome, Severity, Source
+from eventlog.schema import EventLogEntry, Outcome, Severity, Source
 
 
 class EventLogWriter:

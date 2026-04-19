@@ -7,9 +7,9 @@ See docs/EVENTLOG_SCHEMA.md for the full specification.
 """
 from __future__ import annotations
 
-from mcp.eventlog.schema import EventLogEntry, Outcome, Severity, Source
-from mcp.eventlog.writer import EventLogWriter
-from mcp.eventlog.reader import EventLogReader
+from eventlog.schema import EventLogEntry, Outcome, Severity, Source
+from eventlog.writer import EventLogWriter
+from eventlog.reader import EventLogReader
 
 __all__ = [
     "EventLogEntry",

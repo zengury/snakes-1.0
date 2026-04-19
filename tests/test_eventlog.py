@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from mcp.eventlog import EventLogEntry, EventLogReader, EventLogWriter
+from eventlog import EventLogEntry, EventLogReader, EventLogWriter
 
 
 def test_write_and_read_basic() -> None:

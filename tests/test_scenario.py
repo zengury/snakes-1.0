@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from scenarios.escape_room import EscapeRoom, create_level
-from scenarios.scoring import HackathonScorer, LevelMetrics, score_run
-from scenarios.x2_mock import X2HackathonMock
+from apps.hackathon.escape_room import EscapeRoom, create_level
+from apps.hackathon.scoring import HackathonScorer, LevelMetrics, score_run
+from apps.hackathon.x2_mock import X2HackathonMock
 
 
 def test_level1_explore():
