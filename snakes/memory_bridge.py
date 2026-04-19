@@ -1,97 +1,103 @@
+"""Bridge between agent loop events and EventLog + memkit.
+
+The agent loop emits events. This bridge:
+1. Writes them to EventLog (unified JSONL stream)
+2. Optionally delegates to memkit for learning (critic pipeline)
+"""
 from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from pathlib import Path
+from typing import Any, Optional, Protocol
+
+from eventlog.schema import EventLogEntry
+from eventlog.writer import EventLogWriter
 
 
-class Memory(Protocol):
-    def log_episodic(self, event: str, data: dict[str, Any]) -> None: ...
+class LearningBackend(Protocol):
+    """Optional memkit-compatible learning backend."""
     def query_semantic(self, query: str, top_k: int = 5) -> list[dict[str, Any]]: ...
-    def update_reflex(self, snapshot: dict[str, Any]) -> None: ...
-    def check_reflex(self, command: str, args: dict[str, Any]) -> dict[str, Any]: ...
     def check_safety(self, command: str, args: dict[str, Any]) -> tuple[bool, str]: ...
-    def run_critic(self) -> dict[str, Any]: ...
+    def run_critic(self, task_events: list[dict[str, Any]]) -> dict[str, Any]: ...
 
 
 @dataclass
 class MemoryBridge:
-    memory: Memory
-    _turn_events: list[dict[str, Any]] = field(default_factory=list, init=False)
+    eventlog: EventLogWriter
+    learner: Optional[LearningBackend] = None
+    _task_events: list[dict[str, Any]] = field(default_factory=list, init=False)
+
+    def bind_task(self, task_id: str) -> None:
+        self.eventlog.bind_task(task_id)
+
+    def unbind_task(self) -> None:
+        self.eventlog.unbind_task()
 
     def on_tool_execution_start(self, tool_name: str, args: dict[str, Any]) -> None:
-        event = {
-            "type": "tool_start",
-            "tool": tool_name,
-            "args": args,
-            "timestamp": time.time(),
-        }
-        self._turn_events.append(event)
-        self.memory.log_episodic("tool_execution_start", event)
-
-    def on_tool_execution_end(
-        self, tool_name: str, args: dict[str, Any], result: dict[str, Any]
-    ) -> dict[str, Any] | None:
-        event = {
-            "type": "tool_end",
-            "tool": tool_name,
-            "args": args,
-            "result": result,
-            "timestamp": time.time(),
-        }
-        self._turn_events.append(event)
-        self.memory.log_episodic("tool_execution_end", event)
-
-        anomaly = self.memory.check_reflex(tool_name, result)
-        if anomaly.get("anomaly"):
-            return anomaly
-        return None
-
-    def on_turn_end(self, turn_number: int, summary: dict[str, Any]) -> None:
-        snapshot = {
-            "turn": turn_number,
-            "events": list(self._turn_events),
-            "summary": summary,
-            "timestamp": time.time(),
-        }
-        self.memory.update_reflex(snapshot)
-        self._turn_events.clear()
-
-    def on_agent_end(self, final_state: dict[str, Any]) -> dict[str, Any]:
-        self.memory.log_episodic("agent_end", {
-            "state": final_state,
-            "timestamp": time.time(),
-        })
-        return self.memory.run_critic()
-
-
-def create_memory(robot_name: str) -> Memory:
-    try:
-        import memkit
-    except ImportError:
-        raise ImportError(
-            "memkit is required for memory features. "
-            "Install with: pip install snakes[memkit]"
+        event = {"tool": tool_name, "args": args, "phase": "start"}
+        self._task_events.append(event)
+        self.eventlog.write_cognitive(
+            {"tool_call": {"name": tool_name, "arguments": args}},
+            tags=[tool_name.split(".")[0]],
         )
 
-    config = memkit.Config(
-        namespace=f"snakes.{robot_name}",
-        episodic=memkit.EpisodicConfig(max_events=10000),
-        semantic=memkit.SemanticConfig(embedding_model="default"),
-        reflex=memkit.ReflexConfig(anomaly_threshold=0.8),
-        safety=memkit.SafetyConfig(enabled=True),
-    )
-    return memkit.Memory(config)
+    def on_tool_execution_end(
+        self, tool_name: str, args: dict[str, Any], result: dict[str, Any],
+        success: bool = True,
+    ) -> None:
+        event = {"tool": tool_name, "args": args, "result": result,
+                 "success": success, "phase": "end"}
+        self._task_events.append(event)
+        self.eventlog.write_cognitive(
+            {"tool_result": {"name": tool_name, "success": success, "result": result}},
+            tags=[tool_name.split(".")[0]],
+        )
+
+    def on_reasoning(self, turn: int, reasoning: str) -> None:
+        self.eventlog.write_cognitive(
+            {"turn": turn, "reasoning": reasoning},
+        )
+
+    def on_turn_end(self, turn_number: int) -> None:
+        self.eventlog.write_cognitive(
+            {"turn_end": turn_number},
+            tags=["turn_end"],
+        )
+
+    def on_agent_end(self, task_id: str, success: bool,
+                     failure_reason: Optional[str] = None,
+                     failure_phenomenon: Optional[str] = None) -> dict[str, Any]:
+        outcome = "success" if success else "failure"
+        self.eventlog.set_outcome(
+            task_id, outcome,
+            failure_reason=failure_reason,
+            failure_phenomenon=failure_phenomenon,
+        )
+        self.eventlog.flush()
+
+        critic_result: dict[str, Any] = {}
+        if self.learner:
+            critic_result = self.learner.run_critic(self._task_events)
+
+        self._task_events.clear()
+        return critic_result
+
+    def check_safety(self, command: str, args: dict[str, Any]) -> tuple[bool, str]:
+        if self.learner:
+            return self.learner.check_safety(command, args)
+        return True, ""
+
+    def query_relevant(self, task_description: str) -> list[dict[str, Any]]:
+        if self.learner:
+            return self.learner.query_semantic(task_description)
+        return []
 
 
-def query_relevant_memory(memory: Memory, task_description: str) -> dict[str, Any]:
-    results = memory.query_semantic(task_description, top_k=10)
-    return {
-        "query": task_description,
-        "matches": results,
-        "count": len(results),
-    }
-
-
-def check_safety(memory: Memory, command: str, args: dict[str, Any]) -> tuple[bool, str]:
-    return memory.check_safety(command, args)
+def create_memory_bridge(
+    robot_id: str,
+    eventlog_dir: str | Path = "eventlog/data",
+    learner: Optional[LearningBackend] = None,
+) -> MemoryBridge:
+    writer = EventLogWriter(eventlog_dir, robot_id=robot_id)
+    return MemoryBridge(eventlog=writer, learner=learner)
