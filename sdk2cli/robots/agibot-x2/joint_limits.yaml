@@ -1,0 +1,79 @@
+# AGIBOT X2 Joint Limits — CORRECTED
+# Source: AimDK_X2 SDK motocontrol.py (https://github.com/zengury/SDK-X2)
+# Official spec: 30 active DOF (neck 1 + arms 7×2 + waist 3 + legs 6×2)
+# OmniHand: optional accessory, 10 DOF per hand (not counted in body DOF)
+# URDF: not publicly available
+
+robot: agibot-x2
+active_dof: 30    # official spec: body motors only, excludes hands
+total_joints: 51  # including optional OmniHand (20) + head_pitch (N/A)
+units: radians
+source: sdk_source_code
+
+joints:
+
+  # ── Legs (12 DOF, controllable) ────────────────────────
+  - { name: left_hip_pitch,    index: 0,  lower: -2.704, upper: 2.556,  kp: 40, kd: 4, group: left_leg, controllable: true }
+  - { name: left_hip_roll,     index: 1,  lower: -0.235, upper: 2.906,  kp: 40, kd: 4, group: left_leg, controllable: true }
+  - { name: left_hip_yaw,      index: 2,  lower: -1.684, upper: 3.430,  kp: 30, kd: 3, group: left_leg, controllable: true }
+  - { name: left_knee,         index: 3,  lower: 0.000,  upper: 2.4073, kp: 80, kd: 8, group: left_leg, controllable: true }
+  - { name: left_ankle_pitch,  index: 4,  lower: -0.803, upper: 0.453,  kp: 40, kd: 4, group: left_leg, controllable: true }
+  - { name: left_ankle_roll,   index: 5,  lower: -0.2625,upper: 0.2625, kp: 20, kd: 2, group: left_leg, controllable: true }
+  - { name: right_hip_pitch,   index: 6,  lower: -2.704, upper: 2.556,  kp: 40, kd: 4, group: right_leg, controllable: true }
+  - { name: right_hip_roll,    index: 7,  lower: -2.906, upper: 0.235,  kp: 40, kd: 4, group: right_leg, controllable: true }
+  - { name: right_hip_yaw,     index: 8,  lower: -3.430, upper: 1.684,  kp: 30, kd: 3, group: right_leg, controllable: true }
+  - { name: right_knee,        index: 9,  lower: 0.000,  upper: 2.4073, kp: 80, kd: 8, group: right_leg, controllable: true }
+  - { name: right_ankle_pitch, index: 10, lower: -0.803, upper: 0.453,  kp: 40, kd: 4, group: right_leg, controllable: true }
+  - { name: right_ankle_roll,  index: 11, lower: -0.2625,upper: 0.2625, kp: 20, kd: 2, group: right_leg, controllable: true }
+
+  # ── Waist (3 DOF, controllable) ────────────────────────
+  - { name: waist_yaw,         index: 12, lower: -3.430, upper: 2.382,  kp: 20, kd: 4, group: waist, controllable: true }
+  - { name: waist_pitch,       index: 13, lower: -0.314, upper: 0.314,  kp: 20, kd: 4, group: waist, controllable: true }
+  - { name: waist_roll,        index: 14, lower: -0.488, upper: 0.488,  kp: 20, kd: 4, group: waist, controllable: true }
+
+  # ── Arms (14 DOF, controllable) ────────────────────────
+  - { name: left_shoulder_pitch,  index: 15, lower: -3.080, upper: 2.040,  kp: 20, kd: 2, group: left_arm, controllable: true }
+  - { name: left_shoulder_roll,   index: 16, lower: -0.061, upper: 2.993,  kp: 20, kd: 2, group: left_arm, controllable: true }
+  - { name: left_shoulder_yaw,    index: 17, lower: -2.556, upper: 2.556,  kp: 20, kd: 2, group: left_arm, controllable: true }
+  - { name: left_elbow,           index: 18, lower: -2.3556,upper: 0.000,  kp: 20, kd: 2, group: left_arm, controllable: true }
+  - { name: left_wrist_yaw,       index: 19, lower: -2.556, upper: 2.556,  kp: 20, kd: 2, group: left_arm, controllable: true }
+  - { name: left_wrist_pitch,     index: 20, lower: -0.558, upper: 0.558,  kp: 20, kd: 2, group: left_arm, controllable: true }
+  - { name: left_wrist_roll,      index: 21, lower: -1.571, upper: 0.724,  kp: 20, kd: 2, group: left_arm, controllable: true }
+  - { name: right_shoulder_pitch, index: 22, lower: -3.080, upper: 2.040,  kp: 20, kd: 2, group: right_arm, controllable: true }
+  - { name: right_shoulder_roll,  index: 23, lower: -2.993, upper: 0.061,  kp: 20, kd: 2, group: right_arm, controllable: true }
+  - { name: right_shoulder_yaw,   index: 24, lower: -2.556, upper: 2.556,  kp: 20, kd: 2, group: right_arm, controllable: true }
+  - { name: right_elbow,          index: 25, lower: -2.3556,upper: 0.000,  kp: 20, kd: 2, group: right_arm, controllable: true }
+  - { name: right_wrist_yaw,      index: 26, lower: -2.556, upper: 2.556,  kp: 20, kd: 2, group: right_arm, controllable: true }
+  - { name: right_wrist_pitch,    index: 27, lower: -0.558, upper: 0.558,  kp: 20, kd: 2, group: right_arm, controllable: true }
+  - { name: right_wrist_roll,     index: 28, lower: -0.724, upper: 1.571,  kp: 20, kd: 2, group: right_arm, controllable: true }
+
+  # ── Head (1 active + 1 N/A) ───────────────────────────
+  - { name: head_yaw,   index: 29, lower: -0.366, upper: 0.366, kp: 20, kd: 2, group: head, controllable: true }
+  - { name: head_pitch, index: 30, lower: -0.3838,upper: 0.3838,kp: 20, kd: 2, group: head, controllable: false, note: "N/A on current hardware" }
+
+  # ── OmniHand (optional, 10 DOF per hand) ───────────────
+  # NOT included in the "30 DOF" spec. These are accessory joints.
+  - { name: L_ThumbRoll,  index: 31, lower: -0.5, upper: 0.5, kp: 10, kd: 0.5, group: left_hand, controllable: true, optional: true }
+  - { name: L_ThumbAbAd,  index: 32, lower: -0.5, upper: 1.5, kp: 10, kd: 0.5, group: left_hand, controllable: true, optional: true }
+  - { name: L_ThumbMCP,   index: 33, lower: -0.2, upper: 1.5, kp: 10, kd: 0.5, group: left_hand, controllable: true, optional: true }
+  - { name: L_IndexAbAd,  index: 34, lower: -0.5, upper: 0.5, kp: 10, kd: 0.5, group: left_hand, controllable: true, optional: true }
+  - { name: L_IndexPIP,   index: 35, lower: -0.2, upper: 1.8, kp: 10, kd: 0.5, group: left_hand, controllable: true, optional: true }
+  - { name: L_MiddlePIP,  index: 36, lower: -0.2, upper: 1.8, kp: 10, kd: 0.5, group: left_hand, controllable: true, optional: true }
+  - { name: L_RingAbAd,   index: 37, lower: -0.5, upper: 0.5, kp: 10, kd: 0.5, group: left_hand, controllable: true, optional: true }
+  - { name: L_RingPIP,    index: 38, lower: -0.2, upper: 1.8, kp: 10, kd: 0.5, group: left_hand, controllable: true, optional: true }
+  - { name: L_PinkyAbAd,  index: 39, lower: -0.5, upper: 0.5, kp: 10, kd: 0.5, group: left_hand, controllable: true, optional: true }
+  - { name: L_PinkyPIP,   index: 40, lower: -0.2, upper: 1.8, kp: 10, kd: 0.5, group: left_hand, controllable: true, optional: true }
+  - { name: R_ThumbRoll,  index: 41, lower: -0.5, upper: 0.5, kp: 10, kd: 0.5, group: right_hand, controllable: true, optional: true }
+  - { name: R_ThumbAbAd,  index: 42, lower: -0.5, upper: 1.5, kp: 10, kd: 0.5, group: right_hand, controllable: true, optional: true }
+  - { name: R_ThumbMCP,   index: 43, lower: -0.2, upper: 1.5, kp: 10, kd: 0.5, group: right_hand, controllable: true, optional: true }
+  - { name: R_IndexAbAd,  index: 44, lower: -0.5, upper: 0.5, kp: 10, kd: 0.5, group: right_hand, controllable: true, optional: true }
+  - { name: R_IndexPIP,   index: 45, lower: -0.2, upper: 1.8, kp: 10, kd: 0.5, group: right_hand, controllable: true, optional: true }
+  - { name: R_MiddlePIP,  index: 46, lower: -0.2, upper: 1.8, kp: 10, kd: 0.5, group: right_hand, controllable: true, optional: true }
+  - { name: R_RingAbAd,   index: 47, lower: -0.5, upper: 0.5, kp: 10, kd: 0.5, group: right_hand, controllable: true, optional: true }
+  - { name: R_RingPIP,    index: 48, lower: -0.2, upper: 1.8, kp: 10, kd: 0.5, group: right_hand, controllable: true, optional: true }
+  - { name: R_PinkyAbAd,  index: 49, lower: -0.5, upper: 0.5, kp: 10, kd: 0.5, group: right_hand, controllable: true, optional: true }
+  - { name: R_PinkyPIP,   index: 50, lower: -0.2, upper: 1.8, kp: 10, kd: 0.5, group: right_hand, controllable: true, optional: true }
+
+hand_type: omnihand  # or omnipicker (1 DOF per hand)
+control_period: 0.002  # 2ms (500Hz)
+urdf_available: false

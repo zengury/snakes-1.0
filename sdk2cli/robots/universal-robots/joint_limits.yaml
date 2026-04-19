@@ -1,0 +1,20 @@
+# Universal Robots UR5e Joint Limits
+# Source: ur_rtde SDK joint definitions
+# Status: COMPLETE — all 6 joints with limits from RTDE interface
+# URDF: available in ur_description
+
+robot: ur5e
+dof: 6
+units: radians
+source: ur_rtde_sdk
+urdf_available: true  # ur_description
+
+joints:
+
+  # ── UR5e Joints (6 DOF) ───────────────────────────────
+  - { name: base,     index: 0, lower: -6.28, upper: 6.28, kp: 40, kd: 4, group: arm }
+  - { name: shoulder, index: 1, lower: -6.28, upper: 6.28, kp: 40, kd: 4, group: arm }
+  - { name: elbow,    index: 2, lower: -3.14, upper: 3.14, kp: 40, kd: 4, group: arm }
+  - { name: wrist1,   index: 3, lower: -6.28, upper: 6.28, kp: 40, kd: 4, group: arm }
+  - { name: wrist2,   index: 4, lower: -6.28, upper: 6.28, kp: 40, kd: 4, group: arm }
+  - { name: wrist3,   index: 5, lower: -6.28, upper: 6.28, kp: 40, kd: 4, group: arm }

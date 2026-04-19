@@ -1,0 +1,64 @@
+# version: 0.1.0
+# robot: inspire-hand
+# sdk: inspire_hands (Modbus RTU over RS485)
+# policy: policy.yaml
+
+inspire — Inspire Robotics Dexterous Hand (6 DOF, 12 motor joints, Modbus RTU)
+
+# ── FINGER CONTROL ──────────────────────────────────────────────────
+
+inspire finger open <name:S|all>               # [safe]    Open finger(s) fully.
+inspire finger close <name:S|all>              # [caution] Close finger(s) fully.
+inspire finger move <name:S> --pos I           # [caution] Move finger to position (0-1000).
+
+# ── GESTURES ────────────────────────────────────────────────────────
+
+inspire gesture pinch [--force I=500]          # [caution] Thumb-index precision pinch.
+inspire gesture point                          # [safe]    Index extended, others closed.
+inspire gesture thumbs-up                      # [safe]    Thumb extended, others closed.
+inspire gesture grip [--force I=500]           # [caution] Full power grasp.
+
+# ── SPEED & FORCE ───────────────────────────────────────────────────
+
+inspire speed set --value I                    # [safe]    Set all finger speeds (0-1000).
+inspire force set --value I                    # [caution] Set all finger forces (0-1000).
+inspire force get                              # [safe]    Read per-finger force readings.
+
+# ── JOINT / ANGLE READBACK ──────────────────────────────────────────
+
+inspire joint get <id:I|name:S|all>            # [safe]    Read joint position.
+inspire joint set <id:I|name:S> --q F          # [caution] Command single joint position (normalized 0-1000).
+    [--kp F] [--kd F] [--dq F] [--tau F]
+inspire joint list                             # [safe]    All 6 joint states.
+inspire angles get                             # [safe]    All finger angles.
+
+# ── SYSTEM ──────────────────────────────────────────────────────────
+
+inspire daemon start|stop|status               # [safe]
+inspire shell                                  # [safe]    Interactive REPL.
+inspire bench [--count I=1000]                 # [safe]    Round-trip latency benchmark.
+inspire manifest                               # [safe]    Print this file.
+
+# ── INSPIRE HAND JOINT MAP (6 DOF) ─────────────────────────────────
+#
+#  thumb_bend    (joint 0)  — Thumb flexion/extension
+#  thumb_rotate  (joint 1)  — Thumb rotation
+#  index         (joint 2)  — Index finger flexion/extension
+#  middle        (joint 3)  — Middle finger flexion/extension
+#  ring          (joint 4)  — Ring finger flexion/extension
+#  pinky         (joint 5)  — Pinky finger flexion/extension
+#
+#  Models: RH56DFX, RH56BFX, RH56DFTP (with tactile sensing)
+#  Actuators: 6 linear servo actuators, 12 motor joints
+#  Position range: 0-1000 (normalized)
+#  Protocol: Modbus RTU over RS485, 115200 baud
+#  SDK: pip install inspire_hands (github.com/Sentdex/inspire_hands)
+#
+# INSPIRE_BACKEND=mock|real  INSPIRE_SOCKET=/tmp/inspire.sock
+#
+#   inspire finger open all
+#   inspire finger move index --pos 500
+#   inspire gesture pinch --force 300
+#   inspire speed set --value 800
+#   inspire force get
+#   inspire joint list

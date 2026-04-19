@@ -26,3 +26,6 @@ include = ["snakes*", "eventlog*", "apps*", "vla2cli*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+testpaths = ["tests", "memkit/tests", "eventlog/bridge/tests", "apps/diagnosis/servers/manastone_diag/tests"]
+# Exclude vendor test dirs (sdk2cli robots bring their own tests we don't run at top level)
+norecursedirs = ["sdk2cli"]

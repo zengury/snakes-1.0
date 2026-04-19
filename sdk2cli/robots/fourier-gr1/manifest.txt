@@ -1,0 +1,98 @@
+# version: 0.1.0
+# robot: fourier-gr1
+# sdk: FFTAI/rocs_client_py (WebSocket + HTTP)
+# policy: policy.yaml
+
+gr1 — Fourier GR-1 humanoid (WebSocket + HTTP, rocs_client SDK, 40 DOF)
+
+# ── LIFECYCLE ────────────────────────────────────────────────────────
+
+gr1 start                                      # [caution] Initialize connection. Calls Human.start().
+gr1 exit                                       # [safe]    Shut down connection. Calls Human.exit().
+
+# ── MOTOR CONTROL (Motor class) ─────────────────────────────────────
+
+gr1 motor enable                               # [caution] Enable all motors. Required before motion.
+gr1 motor disable                              # [safe]    Disable all motors. Robot goes limp.
+gr1 motor move --no I --orientation S --angle F # [danger]  Move single motor by number, angle in degrees.
+gr1 motor get-pvc --no I --orientation S        # [safe]    Read position/velocity/current for motor.
+
+# ── POSTURE ──────────────────────────────────────────────────────────
+
+gr1 stand                                      # [caution] Stand up from current pose.
+
+# ── LOCOMOTION (Human.walk) ─────────────────────────────────────────
+
+gr1 walk [--angle F=0] [--speed F=0.5]         # [caution] Walk. angle=direction (deg), speed in m/s.
+
+# ── HEAD CONTROL (Human.head) ───────────────────────────────────────
+
+gr1 head [--roll F=0] [--pitch F=0] [--yaw F=0]
+    # [safe]    Set head orientation (degrees).
+
+# ── UPPER BODY ACTIONS (Human.upper_body) ───────────────────────────
+
+gr1 upper-body action --arm-action S --hand-action S
+    # [caution] Predefined upper body actions.
+    #   arm-action:  NONE | LEFT_ARM_WAVE | TWO_ARMS_WAVE | ARMS_SWING | HELLO
+    #   hand-action: NONE | TREMBLE | GRASP | PINCH | OPEN
+
+# ── SENSORS / STATE ─────────────────────────────────────────────────
+
+gr1 state                                      # [safe]    Full robot state (started, standing, motors).
+gr1 joint get <id:I|name:S|all>                # [safe]    Individual joint state by index or name.
+gr1 joint set <id:I|name:S> --q F              # [caution] Set joint position (rad).
+gr1 joint list                                 # [safe]    All 41 joints (29 body + 12 leg not listed separately + 11 hand).
+
+# ── SYSTEM ───────────────────────────────────────────────────────────
+
+gr1 daemon start|stop|status                   # [safe]
+gr1 bench [--count I=1000]                     # [safe]
+gr1 manifest                                   # [safe]
+
+# ── GR-1 JOINT MAP (40 DOF) ─────────────────────────────────────────
+#
+#  Head (3 DOF):
+#    head_roll  head_pitch  head_yaw
+#
+#  Waist (3 DOF):
+#    waist_yaw  waist_roll  waist_pitch
+#
+#  Left arm (6 DOF):
+#    l_shoulder_pitch  l_shoulder_roll  l_shoulder_yaw
+#    l_elbow_pitch  l_wrist_yaw  l_wrist_roll
+#
+#  Right arm (6 DOF):
+#    r_shoulder_pitch  r_shoulder_roll  r_shoulder_yaw
+#    r_elbow_pitch  r_wrist_yaw  r_wrist_roll
+#
+#  Left leg (6 DOF):
+#    l_hip_yaw  l_hip_roll  l_hip_pitch
+#    l_knee_pitch  l_ankle_pitch  l_ankle_roll
+#
+#  Right leg (6 DOF):
+#    r_hip_yaw  r_hip_roll  r_hip_pitch
+#    r_knee_pitch  r_ankle_pitch  r_ankle_roll
+#
+#  Left hand (6 DOF):
+#    l_thumb_bend  l_thumb_rotate  l_index_bend
+#    l_middle_bend  l_ring_bend  l_pinky_bend
+#
+#  Right hand (5 DOF):
+#    r_thumb_bend  r_thumb_rotate  r_index_bend
+#    r_middle_bend  r_ring_pinky_bend
+#
+#  Motor numbers: 0-17 (body), 18-29 (legs), 30-40 (hand fingers)
+#  Protocol: WebSocket (continuous) + HTTP (instantaneous) to robot IP
+#  SDK: pip install rocs_client  (FFTAI/rocs_client_py)
+
+# GR1_BACKEND=mock|real  GR1_HOST=192.168.1.100  GR1_SOCKET=/tmp/fourier-gr1.sock
+#
+#   gr1 start && gr1 motor enable
+#   gr1 stand
+#   gr1 walk --angle 0 --speed 0.5
+#   gr1 head --pitch -10 --yaw 20
+#   gr1 upper-body action --arm-action LEFT_ARM_WAVE --hand-action TREMBLE
+#   gr1 joint get head_yaw
+#   gr1 motor get-pvc --no 6 --orientation left
+#   gr1 motor disable && gr1 exit

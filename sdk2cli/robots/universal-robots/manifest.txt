@@ -1,0 +1,66 @@
+# version: 0.1.0
+# robot: universal-robots
+# sdk: ur_rtde (RTDE protocol, 500Hz)
+# policy: policy.yaml
+
+ur — Universal Robots UR cobot (6 DOF, RTDE protocol, ur_rtde SDK)
+
+# ── MOTION COMMANDS (RTDEControlInterface) ──────────────────────────
+
+ur move-joint --joints F,F,F,F,F,F [--speed F=1.05] [--accel F=1.4]
+    # [caution] Move to joint positions (rad). Uses moveJ.
+ur move-line --pose F,F,F,F,F,F [--speed F=0.25] [--accel F=1.2]
+    # [caution] Linear move to TCP pose (x,y,z,rx,ry,rz). Uses moveL.
+ur servo-joint --joints F,F,F,F,F,F
+    # [danger]  Real-time joint servo at 500Hz. Uses servoJ.
+ur speed-joint --speeds F,F,F,F,F,F [--accel F=0.5]
+    # [danger]  Joint velocity command. Uses speedJ.
+ur force-mode [--task-frame F,F,F,F,F,F] [--selection I,I,I,I,I,I]
+    [--wrench F,F,F,F,F,F] [--type I=2] [--limits F,F,F,F,F,F]
+    # [danger]  Compliant force control. Uses forceMode.
+ur teach-mode on|off                           # [caution] Enable/disable freedrive (teach pendant).
+ur freedrive on|off                            # [caution] Enable/disable freedrive mode.
+
+# ── QUERY COMMANDS (RTDEReceiveInterface) ───────────────────────────
+
+ur get-pose                                    # [safe]    Current TCP pose (x,y,z,rx,ry,rz).
+ur get-force                                   # [safe]    Current TCP force/torque (fx,fy,fz,tx,ty,tz).
+ur get-mode                                    # [safe]    Robot mode, model, teach/freedrive state.
+ur get-temps                                   # [safe]    Joint temperatures.
+
+# ── JOINT CONTROL ───────────────────────────────────────────────────
+
+ur joint get <id:I|name:S|all>                 # [safe]    Read joint position, velocity, torque.
+ur joint set <id:I|name:S> --q F               # [caution] Command single joint position (rad).
+    [--kp F] [--kd F] [--dq F] [--tau F]
+ur joint list                                  # [safe]    All 6 joint states.
+
+# ── SYSTEM ──────────────────────────────────────────────────────────
+
+ur daemon start|stop|status                    # [safe]
+ur shell                                       # [safe]    Interactive REPL.
+ur bench [--count I=1000]                      # [safe]    Round-trip latency benchmark.
+ur manifest                                    # [safe]    Print this file.
+
+# ── UR JOINT MAP (6 DOF) ───────────────────────────────────────────
+#
+#  Joint 0: base      ±6.28 rad (±360°)
+#  Joint 1: shoulder  ±6.28 rad (±360°)
+#  Joint 2: elbow     ±3.14 rad (±180°)
+#  Joint 3: wrist1    ±6.28 rad (±360°)
+#  Joint 4: wrist2    ±6.28 rad (±360°)
+#  Joint 5: wrist3    ±6.28 rad (±360°)
+#
+#  Models: UR3, UR3e, UR5, UR5e (default), UR10, UR10e, UR16e, UR20, UR30
+#  Protocol: RTDE (Real-Time Data Exchange) over TCP, 500Hz
+#  SDK: pip install ur_rtde
+#
+# UR_BACKEND=mock|real  UR_HOST=192.168.1.1  UR_SOCKET=/tmp/ur.sock
+#
+#   ur move-joint --joints 0,0,0,0,0,0
+#   ur move-line --pose 0.5,0.1,0.3,0,3.14,0
+#   ur get-pose
+#   ur get-force
+#   ur teach-mode on
+#   ur freedrive off
+#   ur joint list

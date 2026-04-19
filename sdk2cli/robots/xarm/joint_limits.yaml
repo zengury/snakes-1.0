@@ -1,0 +1,21 @@
+# UFACTORY xArm7 Joint Limits
+# Source: xArm-Python-SDK joint definitions (degree limits converted to radians)
+# Status: COMPLETE — all 7 joints with exact limits from SDK
+# URDF: available in xarm_ros2
+
+robot: xarm7
+dof: 7
+units: radians
+source: xarm_python_sdk
+urdf_available: true  # xarm_ros2
+
+joints:
+
+  # ── xArm7 Joints (7 DOF) ──────────────────────────────
+  - { name: J1, index: 0, lower: -6.2832, upper: 6.2832, kp: 40, kd: 4, group: arm }
+  - { name: J2, index: 1, lower: -2.0595, upper: 2.0944, kp: 40, kd: 4, group: arm }
+  - { name: J3, index: 2, lower: -6.2832, upper: 6.2832, kp: 40, kd: 4, group: arm }
+  - { name: J4, index: 3, lower: -0.1920, upper: 3.9270, kp: 40, kd: 4, group: arm }
+  - { name: J5, index: 4, lower: -6.2832, upper: 6.2832, kp: 40, kd: 4, group: arm }
+  - { name: J6, index: 5, lower: -1.6930, upper: 3.1416, kp: 40, kd: 4, group: arm }
+  - { name: J7, index: 6, lower: -6.2832, upper: 6.2832, kp: 40, kd: 4, group: arm }

@@ -1,0 +1,68 @@
+unitree — Unitree G1 29-DOF humanoid control surface (unitree_sdk2py over CycloneDDS).
+
+LOCOMOTION (high-level RPC via LocoClient)
+  unitree loco damp|start|stop|zero-torque
+  unitree loco stand-up|sit|squat
+  unitree loco high-stand|low-stand|balance
+  unitree loco move --vx F=0 --vy F=0 --vyaw F=0 [--continuous B=false]
+  unitree loco velocity --vx F --vy F --omega F [--duration F=1.0]
+  unitree loco wave-hand [--turn B=false]
+  unitree loco shake-hand [--stage I=-1]
+  unitree loco fsm {get|set <id:I>}
+  unitree loco stand-height {get|set <height:F>}
+  unitree loco swing-height {get|set <height:F>}
+  unitree loco balance-mode {get|set <mode:I>}
+
+ARM ACTIONS (G1ArmActionClient)
+  unitree arm do <action:{release|clap|high-five|hug|heart|wave|shake-hand|...}>
+  unitree arm list
+
+AUDIO (G1 AudioClient)
+  unitree audio tts <text:S> [--speaker I=0]
+  unitree audio volume {get|set <level:I>}
+  unitree audio led <R:I> <G:I> <B:I>
+
+JOINTS (low-level DDS pub/sub on rt/lowcmd + rt/lowstate)
+  unitree joint get <id:I|name:S|all>
+  unitree joint set <id:I|name:S> --q F [--dq F=0] [--kp F=60] [--kd F=1] [--tau F=0]
+  unitree joint list
+
+IMU
+  unitree imu get                     [--stream --hz I=50]
+
+MODE SWITCHER
+  unitree mode check
+  unitree mode select <name:S>
+  unitree mode release
+
+SYSTEM
+  unitree undo                        [--steps I=1]
+  unitree daemon start|stop|status    [--socket PATH] [--interface S=eth0]
+  unitree shell
+  unitree bench                       [--count I=1000] [--with-cold-start]
+  unitree manifest
+
+G1 Joints (29 DOF, index → name):
+  Legs:  LeftHipPitch(0) LeftHipRoll(1) LeftHipYaw(2) LeftKnee(3)
+         LeftAnklePitch(4) LeftAnkleRoll(5)
+         Right*(6-11) mirror
+  Waist: WaistYaw(12) WaistRoll(13) WaistPitch(14)
+  Arms:  LeftShoulderPitch(15) LeftShoulderRoll(16) LeftShoulderYaw(17)
+         LeftElbow(18) LeftWristRoll(19) LeftWristPitch(20) LeftWristYaw(21)
+         Right*(22-28) mirror
+
+Arm actions: release(99) clap(17) high-five(18) hug(19) heart(20) wave(26) shake-hand(27)
+
+Env: UNITREE_BACKEND=mock|real  UNITREE_ROBOT=g1  UNITREE_SOCKET=/tmp/unitree.sock
+     UNITREE_INTERFACE=eth0     UNITREE_FORMAT=json|text
+
+Examples:
+  unitree loco start && unitree loco move --vx 0.3
+  unitree loco high-stand
+  unitree arm do wave
+  unitree audio tts "hello world"
+  unitree joint get LeftKnee
+  unitree imu get --stream --hz 10
+  unitree mode release && unitree joint set 3 --q 1.5 --kp 100 --kd 2
+  unitree undo
+  unitree shell

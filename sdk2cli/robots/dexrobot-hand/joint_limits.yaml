@@ -1,0 +1,41 @@
+# DexRobot Dexterous Hand Joint Limits (DexHand021)
+# Source: dexrobot_ecosystem SDK (USB-CAN interface)
+# Status: COMPLETE — all 19 joints (4+4+4+4+3) with limits from SDK
+# URDF: available in dexrobot_urdf
+
+robot: dexrobot-hand
+dof: 19  # 4 thumb + 4 index + 4 middle + 4 ring + 3 pinky
+units: radians
+source: dexrobot_ecosystem_sdk
+urdf_available: true  # dexrobot_urdf
+
+joints:
+
+  # ── Thumb (4 DOF) ─────────────────────────────────────
+  - { name: thumb_cmc_abd,  index: 0,  lower: -0.52, upper: 0.52, kp: 10, kd: 1, group: thumb }
+  - { name: thumb_cmc_flex, index: 1,  lower: 0.0,   upper: 1.57, kp: 10, kd: 1, group: thumb }
+  - { name: thumb_mcp,      index: 2,  lower: 0.0,   upper: 1.57, kp: 10, kd: 1, group: thumb }
+  - { name: thumb_ip,       index: 3,  lower: 0.0,   upper: 1.40, kp: 10, kd: 1, group: thumb }
+
+  # ── Index Finger (4 DOF) ──────────────────────────────
+  - { name: index_mcp_abd,  index: 4,  lower: -0.35, upper: 0.35, kp: 10, kd: 1, group: index }
+  - { name: index_mcp_flex, index: 5,  lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: index }
+  - { name: index_pip,      index: 6,  lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: index }
+  - { name: index_dip,      index: 7,  lower: 0.0,   upper: 1.57, kp: 10, kd: 1, group: index }
+
+  # ── Middle Finger (4 DOF) ─────────────────────────────
+  - { name: middle_mcp_abd,  index: 8,  lower: -0.35, upper: 0.35, kp: 10, kd: 1, group: middle }
+  - { name: middle_mcp_flex, index: 9,  lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: middle }
+  - { name: middle_pip,      index: 10, lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: middle }
+  - { name: middle_dip,      index: 11, lower: 0.0,   upper: 1.57, kp: 10, kd: 1, group: middle }
+
+  # ── Ring Finger (4 DOF) ───────────────────────────────
+  - { name: ring_mcp_abd,  index: 12, lower: -0.35, upper: 0.35, kp: 10, kd: 1, group: ring }
+  - { name: ring_mcp_flex, index: 13, lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: ring }
+  - { name: ring_pip,      index: 14, lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: ring }
+  - { name: ring_dip,      index: 15, lower: 0.0,   upper: 1.57, kp: 10, kd: 1, group: ring }
+
+  # ── Pinky Finger (3 DOF, no abduction) ────────────────
+  - { name: pinky_mcp_flex, index: 16, lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: pinky }
+  - { name: pinky_pip,      index: 17, lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: pinky }
+  - { name: pinky_dip,      index: 18, lower: 0.0,   upper: 1.57, kp: 10, kd: 1, group: pinky }

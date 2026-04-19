@@ -1,0 +1,129 @@
+# yaml-frontmatter
+# version: 2.0.0
+# robot: unitree-g1
+# sdk: unitree_sdk2py
+# hash: auto-generated on install
+# policy: policy.yaml
+# audit: audit.jsonl
+
+unitree — Unitree G1 29-DOF humanoid (CycloneDDS, unitree_sdk2py)
+
+# ── LOCOMOTION (LocoClient RPC, service="sport") ──────────────────────
+
+unitree loco damp                                                  # [danger]  FSM→1, cut motor torque, robot collapses. Requires physical reset.
+unitree loco start                                                 # [caution] FSM→200, enter walking-ready state. Must call before move.
+unitree loco stop                                                  # [safe]    SetVelocity(0,0,0), halt motion but keep standing.
+unitree loco zero-torque                                           # [danger]  FSM→0, all motors freewheel. Robot will fall.
+unitree loco stand-up                                              # [caution] FSM→706, transition from squat to bipedal stand.
+unitree loco sit                                                   # [caution] FSM→3, lower to seated posture on ground.
+unitree loco squat                                                 # [caution] FSM→706, transition from stand to squat.
+unitree loco high-stand                                            # [safe]    SetStandHeight(max), tallest standing posture.
+unitree loco low-stand                                             # [safe]    SetStandHeight(0), lowest standing posture.
+unitree loco balance                                               # [safe]    BalanceStand, static balance with no locomotion.
+unitree loco move --vx F=0 --vy F=0 --vyaw F=0 [--continuous B]   # [caution] vx: forward m/s, vy: lateral m/s, vyaw: rotation rad/s.
+unitree loco velocity --vx F --vy F --omega F [--duration F=1.0]   # [caution] Time-limited velocity command. duration in seconds.
+unitree loco wave-hand [--turn B=false]                            # [safe]    Predefined wave gesture. --turn: alternate hand.
+unitree loco shake-hand [--stage I=-1]                             # [safe]    Predefined handshake. stage: -1=auto, 0-3=manual steps.
+unitree loco fsm get                                               # [safe]    Read current FSM state ID.
+unitree loco fsm set <id:I>                                        # [danger]  Force FSM state. Wrong ID can crash robot.
+unitree loco stand-height get                                      # [safe]    Read current standing height (normalized).
+unitree loco stand-height set <height:F>                           # [caution] 0.0=lowest, 1.0=highest. Out of range may destabilize.
+unitree loco swing-height get                                      # [safe]    Read foot swing height during walk.
+unitree loco swing-height set <height:F>                           # [caution] Affects gait clearance. Too high → unstable.
+unitree loco balance-mode get                                      # [safe]    Read balance controller mode.
+unitree loco balance-mode set <mode:I>                             # [caution] 0=default, others model-specific.
+
+# ── ARM ACTIONS (G1ArmActionClient, service="arm") ────────────────────
+
+unitree arm do <action:S>                                          # [safe]    Predefined gesture by name or ID. See action list below.
+unitree arm list                                                   # [safe]    Return all available arm action names + IDs.
+unitree arm release                                                # [caution] action_id=99, release arm servo. Arms go limp.
+
+# ── AUDIO (G1 AudioClient, service="voice") ───────────────────────────
+
+unitree audio tts <text:S> [--speaker I=0]                         # [safe]    Text-to-speech. speaker: voice preset index.
+unitree audio volume get                                           # [safe]    Read current speaker volume (0-100).
+unitree audio volume set <level:I>                                 # [safe]    Set volume 0-100.
+unitree audio led <R:I> <G:I> <B:I>                                # [safe]    Set head LED color. RGB 0-255 each.
+
+# ── JOINTS (low-level DDS: pub rt/lowcmd, sub rt/lowstate) ───────────
+
+unitree joint get <id:I|name:S|all>                                # [safe]    Read motor state: q(rad), dq(rad/s), tau_est(Nm), temp(°C).
+unitree joint set <id:I|name:S> --q F [--dq F=0] [--kp F] [--kd F] [--tau F=0]
+    # [danger]  Direct PD control. q: target position (rad), kp: proportional gain,
+    #           kd: derivative gain, tau: feedforward torque (Nm).
+    #           REQUIRES mode=released first. Wrong values → joint damage.
+    #           Default kp/kd per joint from SDK (legs:60/1, knees:100/2, arms:40/1).
+unitree joint list                                                 # [safe]    All 29 joints: index, name, q, dq, tau_est, temperature.
+
+# ── IMU (from LowState_.imu_state) ───────────────────────────────────
+
+unitree imu get [--stream --hz I=50]                               # [safe]    rpy(rad), gyro(rad/s), accel(m/s²), quaternion(wxyz).
+                                                                   #           --stream: continuous output. --hz: sample rate (max 500).
+
+# ── MODE SWITCHER (MotionSwitcherClient) ──────────────────────────────
+
+unitree mode check                                                 # [safe]    Which motion mode is active (e.g. "normal", "advanced").
+unitree mode select <name:S>                                       # [caution] Switch motion mode. Stops current motion.
+unitree mode release                                               # [danger]  Disable sport_mode. Required before low-level joint control.
+                                                                   #           Robot will NOT self-balance after this.
+
+# ── SYSTEM ────────────────────────────────────────────────────────────
+
+unitree undo [--steps I=1]                                         # [safe]    Rollback last N actuator commands from undo stack.
+unitree daemon start|stop|status [--socket PATH] [--interface S=eth0]
+                                                                   # [safe]    Manage long-running daemon process.
+unitree shell                                                      # [safe]    Interactive REPL with tab-completion and undo.
+unitree bench [--count I=1000] [--with-cold-start]                 # [safe]    Measure daemon RTT latency (p50/p95/p99).
+unitree manifest                                                   # [safe]    Print this manifest.
+
+# ── G1 JOINT MAP (29 DOF) ────────────────────────────────────────────
+#
+#  Index  Name               Limits(rad)    DefaultKp  DefaultKd  Motor
+#  ─────  ─────────────────  ─────────────  ─────────  ─────────  ─────
+#  0      LeftHipPitch       -1.54 ~ +1.54  60         1          M
+#  1      LeftHipRoll        -0.79 ~ +0.79  60         1          M
+#  2      LeftHipYaw         -1.54 ~ +1.54  60         1          M
+#  3      LeftKnee           -0.17 ~ +2.44  100        2          L
+#  4      LeftAnklePitch     -0.79 ~ +0.79  40         1          S
+#  5      LeftAnkleRoll      -0.52 ~ +0.52  40         1          S
+#  6-11   Right*(mirror)     (same as 0-5)
+#  12     WaistYaw           -1.54 ~ +1.54  60         1          M
+#  13     WaistRoll          -0.79 ~ +0.79  40         1          S
+#  14     WaistPitch         -0.79 ~ +0.79  40         1          S
+#  15     LeftShoulderPitch  -3.14 ~ +3.14  40         1          S
+#  16     LeftShoulderRoll   -1.57 ~ +2.97  40         1          S
+#  17     LeftShoulderYaw    -3.14 ~ +3.14  40         1          S
+#  18     LeftElbow          -0.17 ~ +2.70  40         1          S
+#  19     LeftWristRoll      -3.14 ~ +3.14  40         1          S
+#  20     LeftWristPitch     -1.57 ~ +1.57  40         1          S
+#  21     LeftWristYaw       -3.14 ~ +3.14  40         1          S
+#  22-28  Right*(mirror)     (see 15-21, roll signs flipped)
+#
+# Arm actions: release(99) clap(17) high-five(18) hug(19) heart(20)
+#              wave(26) shake-hand(27) hands-up(15) reject(22)
+#
+# DDS Topics: rt/lowcmd (pub), rt/lowstate (sub), rt/api/sport/{req,resp}
+
+# ── RISK LEGEND ───────────────────────────────────────────────────────
+#  [safe]    Read-only or cosmetic. No physical risk.
+#  [caution] Changes robot state. Validated by safety layer. Reversible.
+#  [danger]  Can cause fall, joint damage, or require physical reset.
+#            policy.yaml may require explicit approval for these.
+
+# ── ENV VARS ──────────────────────────────────────────────────────────
+# UNITREE_BACKEND=mock|real   UNITREE_ROBOT=g1
+# UNITREE_SOCKET=/tmp/unitree.sock  UNITREE_INTERFACE=eth0
+# UNITREE_FORMAT=json|text
+
+# ── EXAMPLES ──────────────────────────────────────────────────────────
+#   unitree loco start && unitree loco move --vx 0.3
+#   unitree loco high-stand
+#   unitree arm do wave
+#   unitree audio tts "hello world" --speaker 0
+#   unitree joint get LeftKnee
+#   unitree --format text joint list
+#   unitree imu get --stream --hz 10
+#   unitree mode release && unitree joint set 3 --q 1.5 --kp 100 --kd 2
+#   unitree undo
+#   unitree shell

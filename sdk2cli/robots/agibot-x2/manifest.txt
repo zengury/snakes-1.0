@@ -1,0 +1,181 @@
+# version: 2.0.0
+# robot: agibot-x2
+# sdk: AimDK_X2 v0.9.0 (Pure ROS2, aimdk_msgs)
+# source: https://github.com/zengury/SDK-X2
+# docs: https://x2-aimdk.agibot.com
+# policy: policy.yaml
+
+agibot-x2 — AGIBOT Lingxi X2 humanoid (Pure ROS2 DDS, aimdk_msgs, 30 active DOF)
+
+# ── ACTION MODE (SetMcAction service) ────────────────────────────────
+
+agibot-x2 action set <mode:S>                 # [caution] Switch motion mode by action_desc string.
+    #   PASSIVE_DEFAULT(1)     — zero torque, free
+    #   SOFT_EMERGENCY_STOP(2) — soft e-stop
+    #   DAMPING_DEFAULT(3)     — damping mode
+    #   JOINT_DEFAULT(100)     — position-controlled stand
+    #   JOINT_FREEZE(101)      — position lock
+    #   STAND_DEFAULT(200)     — force-controlled stand
+    #   STAND_BODY_CONTROL(201)— stand + body motion
+    #   LOCOMOTION_DEFAULT(300)— walking
+    #   RUN_DEFAULT(301)       — running
+    #   LOCOMOTION_STEP(302)   — off-road
+    #   SIT_DOWN_DEFAULT(2000) — sit
+    #   CROUCH_DOWN_DEFAULT(2002)— crouch
+    #   LIE_DOWN_DEFAULT(2004) — lie down
+    #   STAND_UP_DEFAULT(2005) — stand up from lying
+    #   ASCEND_STAIRS(2006)    — go upstairs
+    #   DESCEND_STAIRS(2008)   — go downstairs
+agibot-x2 action get                          # [safe]    Current action mode.
+agibot-x2 action list                         # [safe]    All available modes.
+
+# ── INPUT SOURCE (must register before locomotion) ────────────────────
+
+agibot-x2 input add <name:S> [--priority I=40] [--timeout I=1000]
+    # [caution] Register input source. Priority 20-100, timeout in ms.
+agibot-x2 input enable <name:S>               # [safe]    Enable registered source.
+agibot-x2 input disable <name:S>              # [safe]    Disable source.
+agibot-x2 input delete <name:S>               # [safe]    Remove source.
+agibot-x2 input get                           # [safe]    Current active input source.
+
+# ── LOCOMOTION (velocity via /aima/mc/locomotion/velocity) ────────────
+
+agibot-x2 walk --forward F=0 --lateral F=0 --angular F=0
+    # [caution] Velocity (m/s, rad/s). Max 1.0 each. Requires input source registered.
+    #           Start thresholds: fwd≥0.09, lat≥0.60, ang≥0.03. Max safe: 0.8 m/s.
+agibot-x2 walk stop                           # [safe]    Zero velocity.
+
+# ── ARM CONTROL (14 DOF, /aima/hal/joint/arm/) ───────────────────────
+
+agibot-x2 arm set --positions F[14] [--stiffness F[14]] [--damping F[14]]
+    # [caution] Impedance control: τ = kp*(pos_target - pos) + kd*(vel_target - vel) + effort.
+    #           14 joints (L1-L7 + R1-R7) in rad. Default kp=20, kd=2.
+agibot-x2 arm get                             # [safe]    All 14 arm joint states.
+agibot-x2 arm home                            # [caution] Move to default arm pose.
+
+# ── WAIST (3 DOF, /aima/hal/joint/waist/) ────────────────────────────
+
+agibot-x2 waist set --yaw F=0 --pitch F=0 --roll F=0 [--kp F=20] [--kd F=4]
+    # [caution] yaw: -3.43~2.38, pitch: ±0.314, roll: ±0.488 rad.
+agibot-x2 waist get                           # [safe]    Current waist pose.
+
+# ── HEAD (2 DOF, /aima/hal/joint/head/) ──────────────────────────────
+
+agibot-x2 head set --yaw F=0 [--pitch F=0]   # [safe]    yaw: ±0.366 rad. pitch: ±0.384 (may be N/A).
+agibot-x2 head get                            # [safe]    Current head joints.
+
+# ── LEG CONTROL (12 DOF, /aima/hal/joint/leg/) ───────────────────────
+
+agibot-x2 leg set --positions F[12] [--stiffness F[12]] [--damping F[12]]
+    # [danger]  Direct leg joint control. May destabilize robot. Use walk instead.
+agibot-x2 leg get                             # [safe]    All 12 leg joint states.
+
+# ── HAND (OmniHand 10-DOF or OmniPicker 1-DOF per hand) ──────────────
+
+agibot-x2 hand type                           # [safe]    Query hand type (omnihand=1, omnipicker=2).
+agibot-x2 hand set --side {left|right} --positions F[N]
+    # [caution] OmniHand: 10 values (rad). OmniPicker: 1 value (0.0=closed, 1.0=open).
+agibot-x2 hand get [--side {left|right|both}] # [safe]    Hand joint states.
+agibot-x2 hand open [--side {left|right|both}]  # [safe]
+agibot-x2 hand close [--side {left|right|both}] # [caution]
+
+# ── PRESET MOTIONS (SetMcPresetMotion service) ───────────────────────
+
+agibot-x2 motion play <id:I> [--area {left|right|both|full}]
+    # [safe]    Execute preset motion by ID. Area: 1=left, 2=right, 3=both, 11=full.
+    #   1001=raise-hand  1002=wave  1003=handshake  1004=blow-kiss
+    #   1007=heart  1008=high-five  1010=raise-both  1013=salute
+    #   3001=bow  3002=thumbs-up  3003=peace  3007=light-wave
+    #   3008=hug  3009=cross-arms  3011=cheer  3017=clap
+    #   3024=scratch-head  3031=wave-goodbye
+    #   4001=nod-head  4002=shake-head
+agibot-x2 motion list                         # [safe]    All available preset motions.
+
+# ── SENSORS ───────────────────────────────────────────────────────────
+
+agibot-x2 imu get [--source {chest|torso}] [--stream --hz I=50]
+    # [safe]    IMU at up to 500Hz. chest or torso.
+agibot-x2 camera list                         # [safe]    All camera sources.
+agibot-x2 camera get <source:{head-rgb|head-depth|head-rear|stereo-left|stereo-right}>
+    # [safe]    Capture one frame. --output PATH to save.
+agibot-x2 lidar get                           # [safe]    RoboSense E1R point cloud.
+agibot-x2 touch get [--stream]                # [safe]    Head touch sensor (8ch, tap/slide).
+agibot-x2 battery status                      # [safe]    PMU state (421Wh, ~2h @0.5m/s).
+
+# ── INTERACTION (face, TTS, LED, audio) ───────────────────────────────
+
+agibot-x2 tts play <text:S> [--priority {low|mid|high|urgent}]
+    # [safe]    Text-to-speech.
+agibot-x2 audio volume get|set <level:I>      # [safe]    Audio volume.
+agibot-x2 audio mute get|set <on:B>           # [safe]    Mute state.
+agibot-x2 face emoji <name:S>                 # [safe]    Play face emoji on display.
+agibot-x2 face video <path:S>                 # [safe]    Play video on face display.
+agibot-x2 led set --r I --g I --b I [--mode {static|breathing|flash}]
+    # [safe]    LED strip color and animation.
+
+# ── JOINTS (generic, all 31 joints) ──────────────────────────────────
+
+agibot-x2 joint get <id:I|name:S|all>         # [safe]
+agibot-x2 joint set <id:I|name:S> --q F [--kp F] [--kd F]  # [danger]
+agibot-x2 joint list                          # [safe]
+agibot-x2 joint all-state                     # [safe]    GetAllJointState service call.
+
+# ── SYSTEM ────────────────────────────────────────────────────────────
+
+agibot-x2 undo [--steps I=1]                  # [safe]
+agibot-x2 daemon start|stop|status            # [safe]
+agibot-x2 shell                               # [safe]
+agibot-x2 bench [--count I=1000]              # [safe]
+agibot-x2 manifest                            # [safe]
+
+# ── X2 JOINT MAP (31 DOF) ────────────────────────────────────────────
+#
+#  LEG (12): left_hip_{pitch,roll,yaw}, left_knee, left_ankle_{pitch,roll}
+#            right_* mirror
+#    idx  name                    lo(rad)   hi(rad)   kp    kd
+#    0    left_hip_pitch_joint    -2.704    +2.556    40.0  4.0
+#    1    left_hip_roll_joint     -0.235    +2.906    40.0  4.0
+#    2    left_hip_yaw_joint      -1.684    +3.430    30.0  3.0
+#    3    left_knee_joint          0.000    +2.407    80.0  8.0
+#    4    left_ankle_pitch_joint  -0.803    +0.453    40.0  4.0
+#    5    left_ankle_roll_joint   -0.263    +0.263    20.0  2.0
+#    6-11 right_* (mirror, roll signs flipped)
+#
+#  WAIST (3): yaw(-3.43~2.38) pitch(±0.314) roll(±0.488), kp=20 kd=4
+#
+#  ARM (14): 7 per arm
+#    12   left_shoulder_pitch     -3.080    +2.040    20.0  2.0
+#    13   left_shoulder_roll      -0.061    +2.993    20.0  2.0
+#    14   left_shoulder_yaw       -2.556    +2.556    20.0  2.0
+#    15   left_elbow              -2.356     0.000    20.0  2.0
+#    16   left_wrist_yaw          -2.556    +2.556    20.0  2.0
+#    17   left_wrist_pitch        -0.558    +0.558    20.0  2.0
+#    18   left_wrist_roll         -1.571    +0.724    20.0  2.0
+#    19-25 right_* (mirror)
+#
+#  HEAD (2): yaw(±0.366) pitch(±0.384, may be N/A), kp=20 kd=2
+#
+#  OmniHand (10/hand): ThumbRoll,ThumbAbAd,ThumbMCP,IndexAbAd,IndexPIP,
+#                       MiddlePIP,RingAbAd,RingPIP,PinkyAbAd,PinkyPIP
+#  OmniPicker (1/hand): position 0.0~1.0
+#
+# Network: wired 10.0.1.41 | WiFi AP 192.168.88.88 (pw: 02270227)
+# PC2 (dev): Orin NX 16GB, 157 TOPS | Control period: 2ms
+# ROS2 topics: /aima/hal/joint/{head,arm,waist,leg,hand}/{command,state}
+# Locomotion: /aima/mc/locomotion/velocity
+# Build: colcon build (ament_cmake + ament_python)
+
+# ENV: AGIBOT_X2_BACKEND=mock|real  AGIBOT_X2_SOCKET=/tmp/agibot-x2.sock
+#      ROBOT_FORMAT=json|text
+#
+# Examples:
+#   agibot-x2 action set STAND_DEFAULT
+#   agibot-x2 input add my_agent --priority 40
+#   agibot-x2 action set LOCOMOTION_DEFAULT
+#   agibot-x2 walk --forward 0.3
+#   agibot-x2 arm set --positions 0,1.2,0,-0.5,1.5,0,0,0,-1.2,0,0.5,1.5,0,0
+#   agibot-x2 hand open --side both
+#   agibot-x2 motion play 1002 --area left
+#   agibot-x2 tts play "你好世界"
+#   agibot-x2 face emoji happy
+#   agibot-x2 camera get head-rgb --output /tmp/x2.jpg

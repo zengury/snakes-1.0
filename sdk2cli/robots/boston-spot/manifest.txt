@@ -1,0 +1,92 @@
+# version: 2.0.0
+# robot: boston-spot
+# sdk: bosdyn-client (gRPC)
+# policy: policy.yaml
+
+spot — Boston Dynamics Spot quadruped (gRPC, bosdyn-client SDK, 12+6 DOF)
+
+# ── POWER & ESTOP ─────────────────────────────────────────────────────
+
+spot power on                                  # [caution] Power on motors. Requires lease.
+spot power off                                 # [safe]    Power off motors safely.
+spot estop hard                                # [danger]  Immediate motor cutoff. Robot drops.
+spot estop gentle                              # [safe]    Controlled sit then power off.
+spot estop release                             # [caution] Release estop, allow commands.
+
+# ── LOCOMOTION (RobotCommandClient) ──────────────────────────────────
+
+spot stand [--height F=0.0]                    # [caution] Stand up. height: body offset in meters.
+spot sit                                       # [safe]    Sit down safely.
+spot move --vx F=0 --vy F=0 --vyaw F=0        # [caution] Velocity command (m/s, rad/s). Max ~1.6 m/s.
+spot walk-to --x F --y F --yaw F [--frame {body|odom|vision}]
+    # [caution] Walk to position. Coordinates in meters, yaw in rad.
+spot selfright                                 # [caution] Self-right from fallen state.
+spot roll-over [--dir {left|right}]            # [caution] Roll over for battery swap.
+spot euler --roll F=0 --pitch F=0 --yaw F=0    # [safe]    Body orientation (rad). Feet stay planted.
+
+# ── ARM (6-DOF, optional Spot Arm) ───────────────────────────────────
+
+spot arm stow                                  # [safe]    Return arm to stowed position.
+spot arm unstow                                # [caution] Deploy arm to ready position.
+spot arm move --x F --y F --z F [--qw F=1 --qx F=0 --qy F=0 --qz F=0]
+    # [caution] Cartesian end-effector command (meters, quaternion). Frame=body.
+spot arm joint-set --sh0 F --sh1 F --el0 F --el1 F --wr0 F --wr1 F
+    # [caution] Direct 6-DOF joint angles (rad).
+spot arm joint-get                             # [safe]    Read arm joint state.
+
+# ── GRIPPER ───────────────────────────────────────────────────────────
+
+spot gripper open                              # [safe]    Open gripper fully.
+spot gripper close                             # [caution] Close gripper.
+spot gripper set <fraction:F>                  # [caution] 0.0=closed, 1.0=open.
+
+# ── SENSORS ───────────────────────────────────────────────────────────
+
+spot state                                     # [safe]    Full robot state (battery, joints, IMU, estop).
+spot joint get <id:I|name:S|all>               # [safe]    Individual joint state.
+spot joint list                                # [safe]    All 12 leg joints (+ 6 arm if equipped).
+spot image list                                # [safe]    Available camera sources.
+spot image get <source:S> [--output PATH]      # [safe]    Capture image from named camera.
+spot battery                                   # [safe]    Battery SOC, voltage, runtime estimate.
+
+# ── NAVIGATION (GraphNav) ────────────────────────────────────────────
+
+spot nav upload --map PATH                     # [caution] Upload waypoint graph to robot.
+spot nav go --waypoint S                       # [caution] Navigate to named waypoint.
+spot nav localize                              # [safe]    Localize robot on current map.
+spot nav status                                # [safe]    Navigation status + current waypoint.
+
+# ── DOCKING ───────────────────────────────────────────────────────────
+
+spot dock --id I                               # [caution] Dock to charging station by ID.
+spot undock                                    # [caution] Undock from charging station.
+
+# ── SYSTEM ────────────────────────────────────────────────────────────
+
+spot daemon start|stop|status                  # [safe]
+spot shell                                     # [safe]
+spot bench [--count I=1000]                    # [safe]
+spot manifest                                  # [safe]
+
+# ── SPOT JOINT MAP ────────────────────────────────────────────────────
+#
+#  Legs (12 DOF, 3 per leg):
+#    fl.hx  fl.hy  fl.kn     (Front Left: hip-x, hip-y, knee)
+#    fr.hx  fr.hy  fr.kn     (Front Right)
+#    hl.hx  hl.hy  hl.kn     (Hind Left)
+#    hr.hx  hr.hy  hr.kn     (Hind Right)
+#
+#  Arm (6 DOF, optional):
+#    arm0.sh0  arm0.sh1  arm0.el0  arm0.el1  arm0.wr0  arm0.wr1
+#
+#  Protocol: gRPC over network (default: 192.168.80.3)
+#  SDK: pip install bosdyn-client bosdyn-mission bosdyn-choreography
+
+# SPOT_BACKEND=mock|real  SPOT_HOST=192.168.80.3  SPOT_SOCKET=/tmp/spot.sock
+#
+#   spot power on && spot stand
+#   spot move --vx 0.5
+#   spot arm unstow && spot arm move --x 0.7 --y 0 --z 0.25
+#   spot gripper close
+#   spot image get frontleft_fisheye_image --output /tmp/front.jpg
+#   spot sit && spot power off

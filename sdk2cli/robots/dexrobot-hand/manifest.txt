@@ -1,0 +1,67 @@
+# version: 0.1.0
+# robot: dexrobot-hand
+# sdk: dexrobot_ecosystem (USB-CAN, Apache-2.0)
+# policy: policy.yaml
+
+dexrobot — DexRobot Dexterous Hand (19/22 DOF, tactile sensing, USB-CAN)
+
+# ── JOINT CONTROL ───────────────────────────────────────────────────
+
+dexrobot joint get <id:I|name:S|all>           # [safe]    Read joint position, velocity.
+dexrobot joint set <id:I|name:S> --q F         # [caution] Command single joint position (rad).
+    [--kp F] [--kd F] [--dq F] [--tau F]
+dexrobot joint list                            # [safe]    All joint states.
+
+# ── GRASP CONTROL ───────────────────────────────────────────────────
+
+dexrobot grasp open                            # [safe]    All fingers fully extended.
+dexrobot grasp close                           # [caution] Power grasp — all fingers flexed.
+
+# ── TACTILE SENSING ─────────────────────────────────────────────────
+
+dexrobot tactile get [--finger S]              # [safe]    Read tactile sensor array.
+    [--stream]                                 # [safe]    Continuous tactile stream (Ctrl-C to stop).
+
+# ── KINEMATICS ──────────────────────────────────────────────────────
+
+dexrobot fk [--joints F,F,...]                 # [safe]    Forward kinematics: joints -> fingertip poses.
+dexrobot ik --x F --y F --z F [--finger S]     # [safe]    Inverse kinematics: target -> joint angles.
+
+# ── SYSTEM ──────────────────────────────────────────────────────────
+
+dexrobot daemon start|stop|status              # [safe]
+dexrobot shell                                 # [safe]    Interactive REPL.
+dexrobot bench [--count I=1000]                # [safe]    Round-trip latency benchmark.
+dexrobot manifest                              # [safe]    Print this file.
+
+# ── DEXROBOT HAND JOINT MAP (19 DOF — DexHand021) ──────────────────
+#
+#  Thumb (4 DOF):
+#    thumb_cmc_abd    thumb_cmc_flex    thumb_mcp    thumb_ip
+#
+#  Index finger (4 DOF):
+#    index_mcp_abd    index_mcp_flex    index_pip    index_dip
+#
+#  Middle finger (4 DOF):
+#    middle_mcp_abd   middle_mcp_flex   middle_pip   middle_dip
+#
+#  Ring finger (4 DOF):
+#    ring_mcp_abd     ring_mcp_flex     ring_pip     ring_dip
+#
+#  Pinky finger (3 DOF):
+#    pinky_mcp_flex   pinky_pip         pinky_dip
+#
+#  Models: DexHand021 (19 DOF), DexHand Pro (22 DOF, 18 active)
+#  Sensors: 400+ tactile sensors (Pro), palm camera, joint position sensors
+#  Protocol: USB-CAN interface (pyzlg_dexhand)
+#  Kinematics: dexrobot_kinematics (FK/IK)
+#  SDK: github.com/DexRobot/dexrobot_ecosystem (Apache-2.0)
+#
+# DEXROBOT_BACKEND=mock|real  DEXROBOT_SOCKET=/tmp/dexrobot.sock
+#
+#   dexrobot joint list
+#   dexrobot joint set thumb_cmc_flex --q 1.0
+#   dexrobot grasp close
+#   dexrobot tactile get --finger index
+#   dexrobot fk
+#   dexrobot ik --x 0.05 --y 0.02 --z 0.1 --finger index

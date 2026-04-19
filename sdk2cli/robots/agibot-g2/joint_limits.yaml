@@ -1,0 +1,74 @@
+# AGIBOT G2 Joint Limits — CORRECTED
+# Source: genie_sim name_utils.py + robot_joint_names.json
+# Official spec: 26 active DOF (5 body + 3 head + 7×2 arm)
+# Grippers: passive linkage (inner/outer coupled), not independent DOF
+# Wheels: steering/drive, not counted as DOF
+# URDF: USD model available in genie_sim
+
+robot: agibot-g2
+active_dof: 26    # official spec: 5 body + 3 head + 14 arm
+total_joints: 46  # including 16 gripper linkages + 8 wheel joints
+units: radians
+source: genie_sim_source
+
+joints:
+
+  # ── Body/Waist (5 DOF, controllable) ───────────────────
+  - { name: body_joint1, index: 0, lower: -1.57, upper: 1.57, kp: 40, kd: 4, group: body, controllable: true }
+  - { name: body_joint2, index: 1, lower: -0.79, upper: 0.79, kp: 40, kd: 4, group: body, controllable: true }
+  - { name: body_joint3, index: 2, lower: -0.79, upper: 0.79, kp: 40, kd: 4, group: body, controllable: true }
+  - { name: body_joint4, index: 3, lower: -1.57, upper: 1.57, kp: 40, kd: 4, group: body, controllable: true }
+  - { name: body_joint5, index: 4, lower: -0.79, upper: 0.79, kp: 40, kd: 4, group: body, controllable: true }
+
+  # ── Head (3 DOF, controllable) ─────────────────────────
+  - { name: head_joint1, index: 5, lower: -1.57, upper: 1.57, kp: 20, kd: 2, group: head, controllable: true }
+  - { name: head_joint2, index: 6, lower: -0.79, upper: 0.79, kp: 20, kd: 2, group: head, controllable: true }
+  - { name: head_joint3, index: 7, lower: -0.52, upper: 0.52, kp: 20, kd: 2, group: head, controllable: true }
+
+  # ── Arms (14 DOF, controllable) ────────────────────────
+  - { name: arm_l_joint1, index: 8,  lower: -3.14, upper: 3.14, kp: 40, kd: 2, group: left_arm, controllable: true }
+  - { name: arm_l_joint2, index: 9,  lower: -2.09, upper: 2.09, kp: 40, kd: 2, group: left_arm, controllable: true }
+  - { name: arm_l_joint3, index: 10, lower: -3.14, upper: 3.14, kp: 40, kd: 2, group: left_arm, controllable: true }
+  - { name: arm_l_joint4, index: 11, lower: -2.44, upper: 0.17, kp: 40, kd: 2, group: left_arm, controllable: true }
+  - { name: arm_l_joint5, index: 12, lower: -3.14, upper: 3.14, kp: 20, kd: 1, group: left_arm, controllable: true }
+  - { name: arm_l_joint6, index: 13, lower: -1.57, upper: 1.57, kp: 20, kd: 1, group: left_arm, controllable: true }
+  - { name: arm_l_joint7, index: 14, lower: -3.14, upper: 3.14, kp: 20, kd: 1, group: left_arm, controllable: true }
+  - { name: arm_r_joint1, index: 15, lower: -3.14, upper: 3.14, kp: 40, kd: 2, group: right_arm, controllable: true }
+  - { name: arm_r_joint2, index: 16, lower: -2.09, upper: 2.09, kp: 40, kd: 2, group: right_arm, controllable: true }
+  - { name: arm_r_joint3, index: 17, lower: -3.14, upper: 3.14, kp: 40, kd: 2, group: right_arm, controllable: true }
+  - { name: arm_r_joint4, index: 18, lower: -2.44, upper: 0.17, kp: 40, kd: 2, group: right_arm, controllable: true }
+  - { name: arm_r_joint5, index: 19, lower: -3.14, upper: 3.14, kp: 20, kd: 1, group: right_arm, controllable: true }
+  - { name: arm_r_joint6, index: 20, lower: -1.57, upper: 1.57, kp: 20, kd: 1, group: right_arm, controllable: true }
+  - { name: arm_r_joint7, index: 21, lower: -3.14, upper: 3.14, kp: 20, kd: 1, group: right_arm, controllable: true }
+
+  # ── Grippers (passive linkage, NOT independent DOF) ────
+  - { name: gripper_l_inner1, index: 22, lower: -0.1, upper: 1.2, group: left_gripper, controllable: false, note: "coupled linkage" }
+  - { name: gripper_l_inner3, index: 23, lower: -0.1, upper: 1.2, group: left_gripper, controllable: false }
+  - { name: gripper_l_inner4, index: 24, lower: -0.1, upper: 1.2, group: left_gripper, controllable: false }
+  - { name: gripper_l_inner0, index: 25, lower: -0.1, upper: 1.2, group: left_gripper, controllable: false }
+  - { name: gripper_l_outer1, index: 26, lower: -0.1, upper: 1.2, group: left_gripper, controllable: false }
+  - { name: gripper_l_outer3, index: 27, lower: -0.1, upper: 1.2, group: left_gripper, controllable: false }
+  - { name: gripper_l_outer4, index: 28, lower: -0.1, upper: 1.2, group: left_gripper, controllable: false }
+  - { name: gripper_l_outer0, index: 29, lower: -0.1, upper: 1.2, group: left_gripper, controllable: false }
+  - { name: gripper_r_inner1, index: 30, lower: -0.1, upper: 1.2, group: right_gripper, controllable: false }
+  - { name: gripper_r_inner3, index: 31, lower: -0.1, upper: 1.2, group: right_gripper, controllable: false }
+  - { name: gripper_r_inner4, index: 32, lower: -0.1, upper: 1.2, group: right_gripper, controllable: false }
+  - { name: gripper_r_inner0, index: 33, lower: -0.1, upper: 1.2, group: right_gripper, controllable: false }
+  - { name: gripper_r_outer1, index: 34, lower: -0.1, upper: 1.2, group: right_gripper, controllable: false }
+  - { name: gripper_r_outer3, index: 35, lower: -0.1, upper: 1.2, group: right_gripper, controllable: false }
+  - { name: gripper_r_outer4, index: 36, lower: -0.1, upper: 1.2, group: right_gripper, controllable: false }
+  - { name: gripper_r_outer0, index: 37, lower: -0.1, upper: 1.2, group: right_gripper, controllable: false }
+
+  # ── Wheels (drive/steer, not counted as DOF) ───────────
+  - { name: lwheel_front1, index: 38, lower: -999, upper: 999, group: chassis, controllable: false, note: "wheel" }
+  - { name: lwheel_front2, index: 39, lower: -999, upper: 999, group: chassis, controllable: false }
+  - { name: lwheel_rear1,  index: 40, lower: -999, upper: 999, group: chassis, controllable: false }
+  - { name: lwheel_rear2,  index: 41, lower: -999, upper: 999, group: chassis, controllable: false }
+  - { name: rwheel_front1, index: 42, lower: -999, upper: 999, group: chassis, controllable: false }
+  - { name: rwheel_front2, index: 43, lower: -999, upper: 999, group: chassis, controllable: false }
+  - { name: rwheel_rear1,  index: 44, lower: -999, upper: 999, group: chassis, controllable: false }
+  - { name: rwheel_rear2,  index: 45, lower: -999, upper: 999, group: chassis, controllable: false }
+
+arm_home: [0.0, -0.66, 0.0, -1.6, 0.0, -0.8, 0.0]
+control_period: 0.01
+urdf_available: true  # USD in genie_sim

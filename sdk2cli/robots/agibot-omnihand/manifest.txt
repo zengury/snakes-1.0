@@ -1,0 +1,54 @@
+# version: 2.0.0
+# robot: agibot-omnihand
+# sdk: Omnihand-2025-SDK / OmniHand-Pro-2025 (CANFD)
+# policy: policy.yaml
+
+agibot-omnihand — AGIBOT OmniHand dexterous hand (10/12 DOF, CANFD, 400+ tactile points)
+
+# ── MOTOR CONTROL ─────────────────────────────────────────────────────
+
+agibot-omnihand motor set <index:I> --position F [--torque F]
+    # [caution] Set finger motor position (rad) or torque (Nm).
+    #           Standard: motors 1-10. Pro: motors 1-12.
+agibot-omnihand motor get <index:I|all>
+    # [safe]    Read motor state: position, velocity, torque, temperature.
+agibot-omnihand motor list
+    # [safe]    All motors with current state.
+
+# ── GRASP PRIMITIVES ─────────────────────────────────────────────────
+
+agibot-omnihand grasp open                     # [safe]    Open all fingers fully.
+agibot-omnihand grasp close [--force F=0.5]    # [caution] Close all fingers. force: 0.0~1.0.
+agibot-omnihand grasp pinch [--force F=0.5]    # [caution] Thumb + index pinch.
+
+# ── TACTILE SENSORS (400+ points, 0.1N resolution) ───────────────────
+
+agibot-omnihand tactile get [--stream --hz I=30]
+    # [safe]    Read tactile array. 400+ pressure values, 0.1N resolution.
+    #           Max fingertip force: 5N.
+
+# ── SYSTEM ────────────────────────────────────────────────────────────
+
+agibot-omnihand undo [--steps I=1]             # [safe]
+agibot-omnihand daemon start|stop|status       # [safe]
+agibot-omnihand manifest                       # [safe]
+
+# ── MOTOR MAP ─────────────────────────────────────────────────────────
+#
+#  Standard (10 DOF):  motors 1-10
+#    Thumb: 2 motors (abduction + flexion)
+#    Index/Middle/Ring/Pinky: 2 motors each
+#
+#  Pro (12 DOF):  motors 1-12
+#    Extended thumb + enhanced finger independence
+#
+#  Weight: 500g | Communication: CANFD (ZLG USBCANFD)
+#  Tactile: 400+ distributed sensors | Max fingertip: 5N
+#  Control modes: position | torque | hybrid
+
+# AGIBOT_BACKEND=mock|real  AGIBOT_HAND_MODEL=standard|pro
+#
+#   agibot-omnihand grasp open
+#   agibot-omnihand motor set 1 --position 0.5
+#   agibot-omnihand tactile get --stream --hz 10
+#   agibot-omnihand motor get all

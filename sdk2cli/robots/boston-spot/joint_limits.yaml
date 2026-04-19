@@ -1,0 +1,40 @@
+# Boston Dynamics Spot Joint Limits
+# Source: bosdyn-client SDK joint definitions
+# Status: COMPLETE — all 18 joints (12 leg + 6 arm) with limits from SDK
+# URDF: not publicly available
+
+robot: boston-spot
+dof: 18  # 12 leg + 6 arm
+units: radians
+source: bosdyn_client_sdk
+urdf_available: false
+
+joints:
+
+  # ── Front Left Leg (3 DOF) ────────────────────────────
+  - { name: fl.hx, index: 0,  lower: -0.79, upper: 0.79, kp: 40, kd: 4, group: front_left_leg }
+  - { name: fl.hy, index: 1,  lower: -0.90, upper: 2.50, kp: 40, kd: 4, group: front_left_leg }
+  - { name: fl.kn, index: 2,  lower: -2.79, upper: -0.25,kp: 40, kd: 4, group: front_left_leg }
+
+  # ── Front Right Leg (3 DOF) ───────────────────────────
+  - { name: fr.hx, index: 3,  lower: -0.79, upper: 0.79, kp: 40, kd: 4, group: front_right_leg }
+  - { name: fr.hy, index: 4,  lower: -0.90, upper: 2.50, kp: 40, kd: 4, group: front_right_leg }
+  - { name: fr.kn, index: 5,  lower: -2.79, upper: -0.25,kp: 40, kd: 4, group: front_right_leg }
+
+  # ── Hind Left Leg (3 DOF) ─────────────────────────────
+  - { name: hl.hx, index: 6,  lower: -0.79, upper: 0.79, kp: 40, kd: 4, group: hind_left_leg }
+  - { name: hl.hy, index: 7,  lower: -0.90, upper: 2.50, kp: 40, kd: 4, group: hind_left_leg }
+  - { name: hl.kn, index: 8,  lower: -2.79, upper: -0.25,kp: 40, kd: 4, group: hind_left_leg }
+
+  # ── Hind Right Leg (3 DOF) ────────────────────────────
+  - { name: hr.hx, index: 9,  lower: -0.79, upper: 0.79, kp: 40, kd: 4, group: hind_right_leg }
+  - { name: hr.hy, index: 10, lower: -0.90, upper: 2.50, kp: 40, kd: 4, group: hind_right_leg }
+  - { name: hr.kn, index: 11, lower: -2.79, upper: -0.25,kp: 40, kd: 4, group: hind_right_leg }
+
+  # ── Arm (6 DOF, optional) ─────────────────────────────
+  - { name: arm0.sh0, index: 12, lower: -3.14, upper: 1.80, kp: 20, kd: 2, group: arm }
+  - { name: arm0.sh1, index: 13, lower: -3.10, upper: 0.34, kp: 20, kd: 2, group: arm }
+  - { name: arm0.el0, index: 14, lower: 0.0,   upper: 3.14, kp: 20, kd: 2, group: arm }
+  - { name: arm0.el1, index: 15, lower: -2.79, upper: 2.79, kp: 20, kd: 2, group: arm }
+  - { name: arm0.wr0, index: 16, lower: -1.83, upper: 2.87, kp: 20, kd: 2, group: arm }
+  - { name: arm0.wr1, index: 17, lower: -2.87, upper: 2.87, kp: 20, kd: 2, group: arm }

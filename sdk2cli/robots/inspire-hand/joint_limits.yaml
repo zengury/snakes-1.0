@@ -1,0 +1,20 @@
+# Inspire Robotics Dexterous Hand Joint Limits
+# Source: inspire_hands SDK (Modbus RTU over RS485)
+# Status: COMPLETE — all 6 joints with 0-1000 position range from SDK
+# URDF: not publicly available
+
+robot: inspire-hand
+dof: 6  # 6 linear servo actuators (RH56DFX/BFX/DFTP)
+units: position_0_1000  # NOT radians — normalized servo travel 0-1000
+source: inspire_hands_sdk
+urdf_available: false
+
+joints:
+
+  # ── Fingers (6 DOF) ───────────────────────────────────
+  - { name: thumb_bend,   index: 0, lower: 0, upper: 1000, kp: 10, kd: 1, group: thumb }
+  - { name: thumb_rotate, index: 1, lower: 0, upper: 1000, kp: 10, kd: 1, group: thumb }
+  - { name: index,        index: 2, lower: 0, upper: 1000, kp: 10, kd: 1, group: finger }
+  - { name: middle,       index: 3, lower: 0, upper: 1000, kp: 10, kd: 1, group: finger }
+  - { name: ring,         index: 4, lower: 0, upper: 1000, kp: 10, kd: 1, group: finger }
+  - { name: pinky,        index: 5, lower: 0, upper: 1000, kp: 10, kd: 1, group: finger }

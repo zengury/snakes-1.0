@@ -1,0 +1,163 @@
+# version: 2.0.0
+# robot: agibot-a2
+# sdk: a2_aimdk (HTTP/JSON RPC + ROS2 pub/sub)
+# source: https://github.com/zengury/sdks
+# policy: policy.yaml
+
+agibot-a2 — AGIBOT Expedition A2 humanoid (AimDK SDK, HTTP RPC + ROS2, 28+ DOF)
+
+# ── ACTION MODE (must set before arm/waist control) ──────────────────
+
+agibot-a2 action set <mode:{locomotion|arm-servo|arm-planning|whole-body}>
+    # [caution] Switch control mode. Required before arm/waist commands.
+    #   locomotion    = McAction_RL_LOCOMOTION_DEFAULT (walk only)
+    #   arm-servo     = McAction_RL_LOCOMOTION_ARM_EXT_JOINT_SERVO (walk + arm joints)
+    #   arm-planning  = McAction_RL_LOCOMOTION_ARM_EXT_PLANNING_MOVE (walk + arm IK)
+    #   whole-body    = McAction_RL_WHOLE_BODY_EXT_JOINT_SERVO (walk + arm + waist)
+agibot-a2 action get                          # [safe]    Current action mode.
+agibot-a2 action list                         # [safe]    All available action modes.
+
+# ── LOCOMOTION (RL-controlled legs, velocity command) ─────────────────
+
+agibot-a2 walk --forward F=0 --lateral F=0 --angular F=0 [--mode {default|navigation}]
+    # [caution] Velocity command (m/s, rad/s). forward: +fwd/-back, lateral: +left/-right,
+    #           angular: +left-rotate/-right-rotate. navigation mode = faster response.
+agibot-a2 walk stop                           # [safe]    Zero velocity.
+agibot-a2 gait set <type:{stance|walk|smart-walk|terrain|run|jump|hop}>
+    # [caution] Switch locomotion gait type.
+agibot-a2 gait get                            # [safe]    Current gait type.
+agibot-a2 stand                               # [caution] Enter standing posture.
+
+# ── ARM CONTROL (7 DOF per arm, ROS2 @50Hz or RPC) ───────────────────
+
+agibot-a2 arm joint-set --positions F[14] [--velocities F[14]] [--efforts F[14]]
+    # [caution] Direct 14-joint command (rad). Order: L1-L7, R1-R7.
+    #           Requires action mode = arm-servo or whole-body.
+agibot-a2 arm joint-get                       # [safe]    All 14 arm joint positions/velocities/efforts.
+agibot-a2 arm home                            # [caution] Move arms to home position.
+    #           Home: [0, 1.2, 0, -0.5, 1.5, 0, 0,  0, -1.2, 0, 0.5, 1.5, 0, 0]
+agibot-a2 arm move-joint <group:{left|right|both}> --angles F[7]
+    # [caution] Joint-space motion via RPC (McMotionService/JointMove).
+agibot-a2 arm move-linear --side {left|right} --x F --y F --z F [--qx F=0 --qy F=0 --qz F=0 --qw F=1]
+    # [caution] Cartesian linear motion to SE3 target (McMotionService/LinearMove).
+agibot-a2 arm plan --side {left|right} --x F --y F --z F [--qx F=0 --qy F=0 --qz F=0 --qw F=1]
+    # [caution] Motion planning with collision avoidance (McMotionService/PlanningMove).
+agibot-a2 arm interact <type:{handshake|fistbump|free}> [--side {left|right}]
+    # [safe]    Predefined interactive motion.
+agibot-a2 arm tcp-get [--side {left|right|both}]
+    # [safe]    Read TCP (tool center point) pose relative to base.
+agibot-a2 arm fk --angles F[7] [--side {left|right}]
+    # [safe]    Compute forward kinematics (no motion).
+agibot-a2 arm ik --x F --y F --z F [--qx F --qy F --qz F --qw F] [--side {left|right}]
+    # [safe]    Compute inverse kinematics (no motion).
+
+# ── HAND CONTROL (6 DOF per hand, position 0-2000) ───────────────────
+
+agibot-a2 hand set --side {left|right} --thumb0 I --thumb1 I --index I --middle I --ring I --pinky I
+    # [caution] Set finger positions (0=open, 2000=closed). Torque 0-5700 optional.
+agibot-a2 hand get [--side {left|right|both}]
+    # [safe]    Read finger positions and forces.
+agibot-a2 hand open [--side {left|right|both}]
+    # [safe]    Open all fingers (position=0).
+agibot-a2 hand close [--side {left|right|both}] [--force I=2000]
+    # [caution] Close all fingers to specified force.
+agibot-a2 hand gesture <name:{pinch|grip|point|thumbs-up|fist|open}> [--side {left|right|both}]
+    # [safe]    Predefined hand gesture.
+
+# ── HEAD/NECK (2 DOF: yaw + pitch) ───────────────────────────────────
+
+agibot-a2 head set --yaw F=0 --pitch F=0     # [safe]    Yaw: ±0.785 rad (±45°), Pitch: ±0.401 rad (±23°).
+agibot-a2 head get                            # [safe]    Current head joint angles.
+agibot-a2 head shake                          # [safe]    Predefined head shake (no).
+agibot-a2 head nod                            # [safe]    Predefined head nod (yes).
+
+# ── WAIST (6 DOF pose: x,y,z,roll,pitch,yaw) ─────────────────────────
+
+agibot-a2 waist set [--z F=0] [--roll F=0] [--pitch F=0] [--yaw F=0]
+    # [caution] z: -0.15~+0.04 m, roll/pitch/yaw: ±0.5236 rad (±30°).
+    #           Requires action mode = whole-body.
+agibot-a2 waist get                           # [safe]    Current waist pose.
+agibot-a2 waist lift <z:F>                    # [caution] Shortcut: set waist z only.
+
+# ── JOINTS (generic access to all joints) ────────────────────────────
+
+agibot-a2 joint get <id:I|name:S|all>         # [safe]    Read joint state (position, velocity, effort).
+agibot-a2 joint set <id:I|name:S> --q F       # [danger]  Direct joint position. Use arm/hand/head instead.
+agibot-a2 joint list                          # [safe]    All joints with current state.
+agibot-a2 joint params                        # [safe]    Query runtime joint limits from robot.
+
+# ── SENSORS ───────────────────────────────────────────────────────────
+
+agibot-a2 imu get [--stream --hz I=50]        # [safe]    Body IMU: orientation, gyro, accel.
+agibot-a2 camera list                         # [safe]    Available camera sources.
+agibot-a2 camera get <source:{head-rgb|head-depth|hip-rgb|hip-depth|chest-left|chest-right|interactive}>
+    # [safe]    Capture one frame. Add --output PATH to save.
+agibot-a2 lidar get                           # [safe]    Neck LiDAR point cloud snapshot.
+
+# ── DANCE / MOTION PLAYBACK ──────────────────────────────────────────
+
+agibot-a2 dance list                          # [safe]    Available dance types.
+agibot-a2 dance play <name:S>                 # [safe]    Start a dance.
+agibot-a2 dance stop                          # [safe]    Stop current dance.
+
+# ── SAFETY ────────────────────────────────────────────────────────────
+
+agibot-a2 safe-stop                           # [danger]  Emergency stop all motion.
+agibot-a2 collision detect                    # [safe]    Check collision status.
+agibot-a2 collision predict --side {left|right} --x F --y F --z F
+    # [safe]    Predict collision at target pose.
+
+# ── SYSTEM ────────────────────────────────────────────────────────────
+
+agibot-a2 undo [--steps I=1]                  # [safe]
+agibot-a2 daemon start|stop|status [--socket PATH]  # [safe]
+agibot-a2 shell                               # [safe]
+agibot-a2 bench [--count I=1000]              # [safe]
+agibot-a2 manifest                            # [safe]
+
+# ── A2 JOINT MAP ─────────────────────────────────────────────────────
+#
+#  Arms (14 DOF, 7 per arm):
+#    13  idx13_left_arm_joint1   (shoulder pitch)
+#    14  idx14_left_arm_joint2   (shoulder roll)
+#    15  idx15_left_arm_joint3   (shoulder yaw)
+#    16  idx16_left_arm_joint4   (elbow pitch)
+#    17  idx17_left_arm_joint5   (wrist roll)
+#    18  idx18_left_arm_joint6   (wrist pitch)
+#    19  idx19_left_arm_joint7   (wrist yaw)
+#    20-26  Right arm (mirror)
+#
+#  Head (2 DOF):
+#    27  idx27_head_joint1  yaw   ±0.785 rad (±45°)
+#    28  idx28_head_joint2  pitch ±0.401 rad (±23°)
+#
+#  Hands (12 DOF, 6 per hand, position 0-2000, torque 0-5700):
+#    L_thumb_swing, L_thumb_1, L_index_1, L_middle_1, L_ring_1, L_little_1
+#    R_thumb_swing, R_thumb_1, R_index_1, R_middle_1, R_ring_1, R_little_1
+#
+#  Waist (6 DOF pose): z(-0.15~+0.04m), roll/pitch/yaw(±30°)
+#  Legs: RL-controlled, not directly accessible (use walk command)
+#
+#  Home arm position (rad):
+#    Left:  [0.0, 1.2, 0.0, -0.5, 1.5, 0.0, 0.0]
+#    Right: [0.0, -1.2, 0.0, 0.5, 1.5, 0.0, 0.0]
+#
+# RPC: http://192.168.100.100:56322/rpc/aimdk.protocol.{Service}/{Method}
+# ROS2: /motion/control/{arm|hand|neck}_joint_command (JointState @50Hz)
+# Cameras: head RGBD, hip RGBD, 2x chest fisheye, interactive camera
+# LiDAR: /aima/hal/lidar/neck/pointcloud
+
+# ENV: AGIBOT_A2_BACKEND=mock|real  AGIBOT_A2_HOST=192.168.100.100
+#      AGIBOT_A2_SOCKET=/tmp/agibot-a2.sock  ROBOT_FORMAT=json|text
+#
+# Examples:
+#   agibot-a2 action set arm-servo
+#   agibot-a2 arm home
+#   agibot-a2 walk --forward 0.3
+#   agibot-a2 hand gesture grip --side left
+#   agibot-a2 head set --yaw 0.3 --pitch -0.2
+#   agibot-a2 waist set --z -0.1 --yaw 0.3
+#   agibot-a2 camera get head-rgb --output /tmp/frame.jpg
+#   agibot-a2 arm plan --side left --x 0.5 --y 0.2 --z 0.8
+#   agibot-a2 dance play wave_dance
+#   agibot-a2 safe-stop

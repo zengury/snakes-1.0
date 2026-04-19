@@ -1,0 +1,23 @@
+[Unit]
+Description=Unitree CLI Daemon — agent-native robot control surface
+After=network.target cyclonedds.service
+Documentation=https://github.com/zengury/sdk2cli
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/unitree daemon start --backend real --interface eth0
+Environment=UNITREE_BACKEND=real
+Environment=UNITREE_SOCKET=/tmp/unitree-daemon.sock
+Environment=UNITREE_INTERFACE=eth0
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/tmp
+
+[Install]
+WantedBy=multi-user.target

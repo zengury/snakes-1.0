@@ -1,0 +1,97 @@
+# version: 0.1.0
+# robot: ufactory-xarm
+# sdk: xArm-Python-SDK (TCP/IP)
+# policy: policy.yaml
+
+xarm — UFACTORY xArm robotic arm (TCP/IP, XArmAPI SDK, 5/6/7 DOF, default xArm7)
+
+# ── STATE / ENABLE / DISABLE ────────────────────────────────────────
+
+xarm get-state                                 # [safe]    Get robot state, mode, error/warn codes.
+xarm set-state <0|3|4>                         # [caution] 0=enable, 3=pause, 4=stop.
+xarm set-mode <mode:I>                         # [caution] 0=position, 1=servo, 2=joint_vel, 4=cart_vel.
+xarm enable                                    # [caution] Enable motors (set_state(0)).
+
+# ── SAFETY ───────────────────────────────────────────────────────────
+
+xarm emergency-stop                            # [danger]  Immediate motor cutoff. Arm drops to gravity.
+xarm clean-error                               # [safe]    Clear error code, allow re-enable.
+xarm clean-warn                                # [safe]    Clear warning code.
+
+# ── MOTION ───────────────────────────────────────────────────────────
+
+xarm move-joint --angles F,F,...               # [caution] Move all joints to target angles (deg).
+xarm move-line --pose F,F,F,F,F,F             # [caution] Linear motion to x,y,z,roll,pitch,yaw (mm,rad).
+xarm move-arc-line --pose F,F,F,F,F,F         # [caution] Arc-line motion to pose.
+xarm move-circle                               # [caution] Circular motion (requires pre-set points).
+xarm move-gohome                               # [caution] Move all joints to zero position.
+
+# ── SERVO CONTROL ────────────────────────────────────────────────────
+
+xarm set-servo-angle --servo-id I --angle F    # [caution] Move single servo to angle (deg).
+xarm set-servo-cartesian --pose F,F,F,F,F,F   # [caution] Servo-mode cartesian streaming command.
+
+# ── VELOCITY CONTROL ─────────────────────────────────────────────────
+
+xarm vc-set-joint-velocity --speeds F,F,...    # [danger]  Joint velocity control (deg/s). Requires mode=2.
+xarm vc-set-cartesian-velocity --speeds F,...  # [danger]  Cartesian velocity control. Requires mode=4.
+
+# ── POSITION QUERIES ─────────────────────────────────────────────────
+
+xarm get-position                              # [safe]    Get TCP position (x,y,z,roll,pitch,yaw).
+xarm get-servo-angle                           # [safe]    Get all servo angles.
+
+# ── TCP CONFIGURATION ────────────────────────────────────────────────
+
+xarm set-tcp-load --weight F [--center F,F,F]  # [caution] Set payload weight (kg) and CoG (mm).
+xarm set-tcp-offset --offset F,F,F,F,F,F      # [caution] Set TCP offset (x,y,z,roll,pitch,yaw).
+xarm set-collision-sensitivity --level I       # [caution] Collision sensitivity 0-5 (0=off).
+
+# ── GRIPPER ──────────────────────────────────────────────────────────
+
+xarm gripper enable [--on 0|1]                 # [caution] Enable/disable gripper.
+xarm gripper position --pos F                  # [caution] Set gripper position 0(closed)-850(open).
+xarm gripper speed --speed F                   # [safe]    Set gripper speed (r/min).
+xarm gripper get                               # [safe]    Get gripper state (enabled, pos, speed).
+
+# ── TOOL GPIO ────────────────────────────────────────────────────────
+
+xarm tgpio set-digital --ionum I --value 0|1   # [caution] Set tool digital output.
+xarm tgpio get-digital                         # [safe]    Read tool digital inputs.
+
+# ── JOINT (shared) ───────────────────────────────────────────────────
+
+xarm joint get <id:I|name:S|all>               # [safe]    Individual joint state.
+xarm joint set <id> --q F                      # [caution] Set joint position (rad).
+xarm joint list                                # [safe]    All joint states.
+
+# ── SYSTEM ───────────────────────────────────────────────────────────
+
+xarm daemon start|stop|status                  # [safe]
+xarm bench [--count I=1000]                    # [safe]
+xarm manifest                                  # [safe]
+
+# ── xArm7 JOINT MAP ─────────────────────────────────────────────────
+#
+#  J1  +/-360 deg  (+/-6.2832 rad)    — base rotation
+#  J2  -118~120 deg  (-2.0595~2.0944 rad)  — shoulder
+#  J3  +/-360 deg  (+/-6.2832 rad)    — elbow rotation
+#  J4  -11~225 deg  (-0.1920~3.9270 rad)   — elbow flex
+#  J5  +/-360 deg  (+/-6.2832 rad)    — wrist rotation
+#  J6  -97~180 deg  (-1.6930~3.1416 rad)   — wrist flex
+#  J7  +/-360 deg  (+/-6.2832 rad)    — wrist roll
+#
+#  Models: xArm5 (5 DOF), xArm6 (6 DOF), xArm7 (7 DOF, default)
+#  Protocol: TCP/IP socket to robot IP (default: 192.168.1.xxx)
+#  SDK: pip install xArm-Python-SDK
+
+# XARM_BACKEND=mock|real  XARM_HOST=192.168.1.xxx  XARM_SOCKET=/tmp/xarm.sock
+#
+#   xarm enable
+#   xarm move-gohome
+#   xarm move-joint --angles 0,30,0,60,0,0,0
+#   xarm move-line --pose 300,0,200,3.14,0,0
+#   xarm set-servo-angle --servo-id 1 --angle 45
+#   xarm gripper enable && xarm gripper position --pos 400
+#   xarm get-position
+#   xarm emergency-stop

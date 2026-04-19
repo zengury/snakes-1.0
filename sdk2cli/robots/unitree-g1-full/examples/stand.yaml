@@ -1,0 +1,14 @@
+# Neutral standing pose — applied atomically by `unitree pose set --file`.
+# Angles are degrees; speed defaults to 1.0 rad/s if omitted.
+left_hip_pitch:  -10
+left_knee:        20
+left_ankle_pitch: -10
+right_hip_pitch: -10
+right_knee:       20
+right_ankle_pitch: -10
+left_shoulder_pitch:
+  angle: 0
+  speed: 0.5
+right_shoulder_pitch:
+  angle: 0
+  speed: 0.5

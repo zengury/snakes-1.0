@@ -1,0 +1,108 @@
+# version: 2.0.0
+# robot: agibot-g2
+# sdk: genie_sim (gRPC)
+# policy: policy.yaml
+# audit: audit.schema.yaml
+
+agibot-g2 — AGIBOT Genie G2 wheeled humanoid (gRPC via genie_sim, 26 active DOF + grippers + wheels)
+
+# ── ARM CONTROL (gRPC RpcClient, Cartesian + Joint space) ────────────
+
+agibot-g2 arm moveto --x F --y F --z F --qw F --qx F --qy F --qz F --side {left|right}
+    # [caution] Cartesian move with IK. Position in meters, orientation as quaternion.
+agibot-g2 arm joint-set --positions F[7] --side {left|right}
+    # [caution] Direct 7-DOF joint angles (rad). Home: [0,-0.66,0,-1.6,0,-0.8,0].
+agibot-g2 arm joint-get [--side {left|right|both}]
+    # [safe]    Read current 7-DOF joint positions (rad).
+agibot-g2 arm ee-pose --side {left|right}
+    # [safe]    Read end-effector position + quaternion.
+agibot-g2 arm ik-check --x F --y F --z F --side {left|right} [--avoid-collision B=true]
+    # [safe]    Check IK feasibility without moving.
+agibot-g2 arm trajectory --file PATH [--block B=true]
+    # [caution] Execute multi-point trajectory from JSON/YAML file.
+
+# ── GRIPPER (inner/outer finger pairs) ────────────────────────────────
+
+agibot-g2 gripper open --side {left|right} [--width F=1.0]
+    # [safe]    Open gripper. width: 0.0=closed, 1.0=fully open.
+agibot-g2 gripper close --side {left|right} [--force F=0.5]
+    # [caution] Close gripper. force: 0.0~1.0 normalized.
+agibot-g2 gripper get --side {left|right}
+    # [safe]    Read gripper state (width, force).
+
+# ── WAIST (5 DOF body joints) ────────────────────────────────────────
+
+agibot-g2 waist set --j1 F --j2 F --j3 F --j4 F --j5 F
+    # [caution] Set body/waist joints (rad). Affects arm workspace.
+agibot-g2 waist get
+    # [safe]    Read current waist joint positions.
+agibot-g2 waist yaw <angle:F>
+    # [caution] Shortcut: rotate waist yaw. Limits: -1.67~+1.67 rad.
+
+# ── HEAD (3 DOF) ─────────────────────────────────────────────────────
+
+agibot-g2 head set --j1 F --j2 F --j3 F
+    # [safe]    Set head pan/tilt/roll (rad).
+agibot-g2 head get
+    # [safe]    Read current head joint positions.
+
+# ── CHASSIS (4-wheel omnidirectional) ─────────────────────────────────
+
+agibot-g2 chassis move --vx F=0 --vy F=0 --vyaw F=0
+    # [caution] Velocity command. vx: forward m/s, vy: lateral, vyaw: rotation rad/s.
+    #           Max 1.5 m/s. Omnidirectional (crab-walk, zero-radius turn).
+agibot-g2 chassis stop
+    # [safe]    Halt all wheel motion.
+
+# ── SENSORS ───────────────────────────────────────────────────────────
+
+agibot-g2 joint get <index:I|name:S|all>
+    # [safe]    Read any joint by index or name. Returns q(rad), dq, torque.
+agibot-g2 joint list
+    # [safe]    All joints with current state.
+
+# ── DATA COLLECTION ──────────────────────────────────────────────────
+
+agibot-g2 record start
+    # [safe]    Begin recording trajectory for imitation learning.
+agibot-g2 record stop
+    # [safe]    Stop recording, save trajectory.
+
+# ── OBJECT MANIPULATION ──────────────────────────────────────────────
+
+agibot-g2 object attach
+    # [caution] Attach nearby object to gripper (sim mode).
+agibot-g2 object detach
+    # [safe]    Release attached object.
+
+# ── SYSTEM ────────────────────────────────────────────────────────────
+
+agibot-g2 undo [--steps I=1]                  # [safe]
+agibot-g2 daemon start|stop|status             # [safe]
+agibot-g2 shell                                # [safe]
+agibot-g2 bench [--count I=1000]               # [safe]
+agibot-g2 manifest                             # [safe]
+
+# ── G2 JOINT MAP (47 joints total) ───────────────────────────────────
+#
+#  Body/Waist (5):  idx01~idx05_body_joint1~5
+#  Head (3):        idx11~idx13_head_joint1~3
+#  Left Arm (7):    idx21~idx27_arm_l_joint1~7
+#  Right Arm (7):   idx61~idx67_arm_r_joint1~7
+#  Left Gripper:    idx31,32,33,39_gripper_l_inner + idx41,42,43,49_outer
+#  Right Gripper:   idx71,72,73,79_gripper_r_inner + idx81,82,83,89_outer
+#  Wheels (8):      idx111,112_lwheel_front + idx121,122_rear + right mirrors
+#
+#  Arm home position: [0.0, -0.66, 0.0, -1.6, 0.0, -0.8, 0.0] rad
+#  Waist yaw limits: -1.67 ~ +1.67 rad
+#  Chassis max speed: 1.5 m/s omnidirectional
+
+# ── ENV / EXAMPLES ───────────────────────────────────────────────────
+# AGIBOT_BACKEND=mock|sim|real  AGIBOT_SOCKET=/tmp/agibot-g2.sock
+#
+#   agibot-g2 chassis move --vx 0.5
+#   agibot-g2 arm moveto --x 0.4 --y 0.2 --z 0.8 --qw 1 --qx 0 --qy 0 --qz 0 --side left
+#   agibot-g2 gripper close --side right --force 0.8
+#   agibot-g2 arm joint-get --side both
+#   agibot-g2 waist yaw 0.5
+#   agibot-g2 record start

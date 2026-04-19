@@ -1,0 +1,69 @@
+# Fourier GR-1 Joint Limits
+# Source: rocs_client_py SDK joint definitions
+# Status: ESTIMATED — many limits are approximate (no official URDF published)
+# URDF: not publicly available
+
+robot: fourier-gr1
+dof: 41  # 3 head + 3 waist + 12 arm + 12 leg + 11 hand
+units: radians
+source: rocs_client_py
+urdf_available: false
+
+joints:
+
+  # ── Head (3 DOF) ──────────────────────────────────────
+  - { name: head_roll,   index: 0,  lower: -0.50, upper: 0.50, kp: 20, kd: 2, group: head, note: estimated }
+  - { name: head_pitch,  index: 1,  lower: -0.60, upper: 0.50, kp: 20, kd: 2, group: head, note: estimated }
+  - { name: head_yaw,    index: 2,  lower: -1.20, upper: 1.20, kp: 20, kd: 2, group: head, note: estimated }
+
+  # ── Waist (3 DOF) ─────────────────────────────────────
+  - { name: waist_yaw,   index: 3,  lower: -0.80, upper: 0.80, kp: 40, kd: 4, group: waist, note: estimated }
+  - { name: waist_roll,  index: 4,  lower: -0.30, upper: 0.30, kp: 40, kd: 4, group: waist, note: estimated }
+  - { name: waist_pitch, index: 5,  lower: -0.50, upper: 0.50, kp: 40, kd: 4, group: waist, note: estimated }
+
+  # ── Left Arm (6 DOF) ──────────────────────────────────
+  - { name: l_shoulder_pitch, index: 6,  lower: -3.14, upper: 2.09, kp: 20, kd: 2, group: left_arm, note: estimated }
+  - { name: l_shoulder_roll,  index: 7,  lower: -0.50, upper: 2.87, kp: 20, kd: 2, group: left_arm, note: estimated }
+  - { name: l_shoulder_yaw,   index: 8,  lower: -2.87, upper: 2.87, kp: 20, kd: 2, group: left_arm, note: estimated }
+  - { name: l_elbow_pitch,    index: 9,  lower: -2.09, upper: 0.00, kp: 20, kd: 2, group: left_arm, note: estimated }
+  - { name: l_wrist_yaw,      index: 10, lower: -1.57, upper: 1.57, kp: 20, kd: 2, group: left_arm, note: estimated }
+  - { name: l_wrist_roll,     index: 11, lower: -1.57, upper: 1.57, kp: 20, kd: 2, group: left_arm, note: estimated }
+
+  # ── Right Arm (6 DOF) ─────────────────────────────────
+  - { name: r_shoulder_pitch, index: 12, lower: -3.14, upper: 2.09, kp: 20, kd: 2, group: right_arm, note: estimated }
+  - { name: r_shoulder_roll,  index: 13, lower: -2.87, upper: 0.50, kp: 20, kd: 2, group: right_arm, note: estimated }
+  - { name: r_shoulder_yaw,   index: 14, lower: -2.87, upper: 2.87, kp: 20, kd: 2, group: right_arm, note: estimated }
+  - { name: r_elbow_pitch,    index: 15, lower: 0.00,  upper: 2.09, kp: 20, kd: 2, group: right_arm, note: estimated }
+  - { name: r_wrist_yaw,      index: 16, lower: -1.57, upper: 1.57, kp: 20, kd: 2, group: right_arm, note: estimated }
+  - { name: r_wrist_roll,     index: 17, lower: -1.57, upper: 1.57, kp: 20, kd: 2, group: right_arm, note: estimated }
+
+  # ── Left Leg (6 DOF) ──────────────────────────────────
+  - { name: l_hip_yaw,     index: 18, lower: -0.60, upper: 0.60, kp: 60, kd: 4, group: left_leg, note: estimated }
+  - { name: l_hip_roll,    index: 19, lower: -0.35, upper: 0.70, kp: 60, kd: 4, group: left_leg, note: estimated }
+  - { name: l_hip_pitch,   index: 20, lower: -1.40, upper: 1.40, kp: 60, kd: 4, group: left_leg, note: estimated }
+  - { name: l_knee_pitch,  index: 21, lower: -0.10, upper: 2.50, kp: 80, kd: 4, group: left_leg, note: estimated }
+  - { name: l_ankle_pitch, index: 22, lower: -0.80, upper: 0.50, kp: 40, kd: 4, group: left_leg, note: estimated }
+  - { name: l_ankle_roll,  index: 23, lower: -0.30, upper: 0.30, kp: 40, kd: 4, group: left_leg, note: estimated }
+
+  # ── Right Leg (6 DOF) ─────────────────────────────────
+  - { name: r_hip_yaw,     index: 24, lower: -0.60, upper: 0.60, kp: 60, kd: 4, group: right_leg, note: estimated }
+  - { name: r_hip_roll,    index: 25, lower: -0.70, upper: 0.35, kp: 60, kd: 4, group: right_leg, note: estimated }
+  - { name: r_hip_pitch,   index: 26, lower: -1.40, upper: 1.40, kp: 60, kd: 4, group: right_leg, note: estimated }
+  - { name: r_knee_pitch,  index: 27, lower: -0.10, upper: 2.50, kp: 80, kd: 4, group: right_leg, note: estimated }
+  - { name: r_ankle_pitch, index: 28, lower: -0.80, upper: 0.50, kp: 40, kd: 4, group: right_leg, note: estimated }
+  - { name: r_ankle_roll,  index: 29, lower: -0.30, upper: 0.30, kp: 40, kd: 4, group: right_leg, note: estimated }
+
+  # ── Left Hand (6 DOF) ─────────────────────────────────
+  - { name: l_thumb_bend,   index: 30, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: left_hand, note: estimated }
+  - { name: l_thumb_rotate, index: 31, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: left_hand, note: estimated }
+  - { name: l_index_bend,   index: 32, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: left_hand, note: estimated }
+  - { name: l_middle_bend,  index: 33, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: left_hand, note: estimated }
+  - { name: l_ring_bend,    index: 34, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: left_hand, note: estimated }
+  - { name: l_pinky_bend,   index: 35, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: left_hand, note: estimated }
+
+  # ── Right Hand (5 DOF) ────────────────────────────────
+  - { name: r_thumb_bend,      index: 36, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: right_hand, note: estimated }
+  - { name: r_thumb_rotate,    index: 37, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: right_hand, note: estimated }
+  - { name: r_index_bend,      index: 38, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: right_hand, note: estimated }
+  - { name: r_middle_bend,     index: 39, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: right_hand, note: estimated }
+  - { name: r_ring_pinky_bend, index: 40, lower: 0.0, upper: 1.57, kp: 10, kd: 1, group: right_hand, note: estimated }

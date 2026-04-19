@@ -1,0 +1,179 @@
+# Execution policy for Unitree G1
+# Loaded by the daemon at startup. Agent commands are checked against
+# these rules BEFORE dispatch. Violations return {"code": "POLICY"}.
+#
+# Fields:
+#   risk:           safe | caution | danger
+#   approval:       auto | confirm | deny
+#                   auto    = execute immediately
+#                   confirm = agent must include {"confirm": true} in args
+#                   deny    = blocked entirely (override with --force in CLI)
+#   rate_limit:     max calls per window (e.g. "10/s", "1/min")
+#   preconditions:  list of state predicates that must be true
+#   cooldown:       minimum seconds between consecutive calls
+#   undo:           whether this command is recorded in the undo stack
+
+version: "2.0.0"
+robot: unitree-g1
+
+# ── Default policy (applies unless overridden per-command) ────────────
+defaults:
+  approval: auto
+  rate_limit: "100/s"
+  undo: false
+
+# ── Per-command policies ──────────────────────────────────────────────
+commands:
+
+  # Locomotion — safe
+  loco.stop:
+    risk: safe
+  loco.high-stand:
+    risk: safe
+  loco.low-stand:
+    risk: safe
+  loco.balance:
+    risk: safe
+  loco.wave-hand:
+    risk: safe
+  loco.shake-hand:
+    risk: safe
+  loco.fsm.get:
+    risk: safe
+  loco.stand-height.get:
+    risk: safe
+  loco.swing-height.get:
+    risk: safe
+  loco.balance-mode.get:
+    risk: safe
+
+  # Locomotion — caution
+  loco.start:
+    risk: caution
+    undo: true
+    preconditions:
+      - "fsm_id in [0, 1, 3]"           # must be idle, damp, or sit
+  loco.stand-up:
+    risk: caution
+    undo: true
+    preconditions:
+      - "fsm_id in [3, 706]"            # must be sitting or squatting
+  loco.sit:
+    risk: caution
+    undo: true
+  loco.squat:
+    risk: caution
+    undo: true
+  loco.move:
+    risk: caution
+    undo: true
+    rate_limit: "50/s"                   # velocity commands can be high-freq
+    preconditions:
+      - "fsm_id == 200"                  # must be in walking-ready state
+  loco.velocity:
+    risk: caution
+    undo: true
+    rate_limit: "50/s"
+    preconditions:
+      - "fsm_id == 200"
+  loco.stand-height.set:
+    risk: caution
+    undo: true
+  loco.swing-height.set:
+    risk: caution
+    undo: true
+  loco.balance-mode.set:
+    risk: caution
+    undo: true
+
+  # Locomotion — danger
+  loco.damp:
+    risk: danger
+    approval: confirm                    # agent must explicitly confirm
+    undo: true
+    cooldown: 5                          # prevent rapid re-damp
+  loco.zero-torque:
+    risk: danger
+    approval: confirm
+    undo: true
+    cooldown: 5
+  loco.fsm.set:
+    risk: danger
+    approval: confirm                    # arbitrary FSM change is dangerous
+    undo: true
+
+  # Arm actions
+  arm.do:
+    risk: safe
+    undo: true
+  arm.list:
+    risk: safe
+  arm.release:
+    risk: caution
+    approval: confirm
+    undo: true
+
+  # Audio
+  audio.tts:
+    risk: safe
+    rate_limit: "5/s"                    # prevent TTS spam
+  audio.volume.get:
+    risk: safe
+  audio.volume.set:
+    risk: safe
+  audio.led:
+    risk: safe
+    rate_limit: "30/s"                   # prevent LED flicker abuse
+
+  # Joints — the most dangerous commands
+  joint.get:
+    risk: safe
+    rate_limit: "500/s"
+  joint.list:
+    risk: safe
+    rate_limit: "100/s"
+  joint.set:
+    risk: danger
+    approval: auto                       # safety layer validates q/kp/kd ranges
+    undo: true
+    rate_limit: "500/s"                  # control loop can be fast
+    preconditions:
+      - "mode == released"               # sport_mode must be off
+
+  # IMU
+  imu.get:
+    risk: safe
+    rate_limit: "500/s"
+
+  # Mode switcher
+  mode.check:
+    risk: safe
+  mode.select:
+    risk: caution
+    undo: true
+  mode.release:
+    risk: danger
+    approval: confirm
+    undo: true
+    cooldown: 3
+
+  # System
+  undo:
+    risk: safe
+  ping:
+    risk: safe
+    rate_limit: "1000/s"
+
+# ── Emergency override ────────────────────────────────────────────────
+# These commands are ALWAYS allowed regardless of policy, even if the
+# agent is in a restricted mode. They exist for human safety.
+emergency_always_allow:
+  - loco.damp
+  - loco.stop
+  - loco.zero-torque
+
+# ── Approval escalation ──────────────────────────────────────────────
+# When approval=confirm, the daemon returns:
+#   {"ok": false, "code": "APPROVAL_REQUIRED", "cmd": "loco.damp",
+#    "risk": "danger", "message": "Confirm with {\"confirm\": true}"}
+# The agent or human must resend with args.confirm=true to proceed.

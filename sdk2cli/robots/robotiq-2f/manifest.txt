@@ -1,0 +1,53 @@
+# version: 0.1.0
+# robot: robotiq-2f
+# sdk: pyRobotiqGripper (Modbus RTU over RS485/TCP)
+# policy: policy.yaml
+
+robotiq — Robotiq 2F adaptive gripper (1 DOF, Modbus RTU, 2F-85 / 2F-140)
+
+# ── GRIPPER COMMANDS ────────────────────────────────────────────────
+
+robotiq activate                               # [caution] Activate gripper. Required before any motion.
+robotiq open                                   # [safe]    Fully open gripper.
+robotiq close                                  # [caution] Fully close gripper.
+robotiq move --position I [--speed I] [--force I]
+    # [caution] Move to position 0-255 (0=open, 255=closed).
+robotiq move-mm --distance F                   # [caution] Move to opening distance in millimeters.
+robotiq status                                 # [safe]    Gripper status (position, speed, force, faults).
+robotiq calibrate                              # [caution] Auto-calibrate open/close limits.
+
+# ── JOINT CONTROL ───────────────────────────────────────────────────
+
+robotiq joint get <id:I|name:S|all>            # [safe]    Read finger position (normalized 0-1).
+robotiq joint set <id:I|name:S> --q F          # [caution] Set finger position (normalized 0-1).
+robotiq joint list                             # [safe]    All joint states.
+
+# ── SYSTEM ──────────────────────────────────────────────────────────
+
+robotiq daemon start|stop|status               # [safe]
+robotiq shell                                  # [safe]    Interactive REPL.
+robotiq bench [--count I=1000]                 # [safe]    Round-trip latency benchmark.
+robotiq manifest                               # [safe]    Print this file.
+
+# ── ROBOTIQ 2F JOINT MAP (1 DOF) ───────────────────────────────────
+#
+#  Joint 0: finger    0.0 - 1.0 (normalized: 0=open, 1=closed)
+#
+#  Position mapping:
+#    Raw:  0 (open) to 255 (closed)
+#    2F-85:  0mm (closed) to 85mm (open)
+#    2F-140: 0mm (closed) to 140mm (open)
+#
+#  Models: 2F-85 (default), 2F-140
+#  Protocol: Modbus RTU over RS485 or TCP/IP
+#  SDK: pip install pyRobotiqGripper
+#
+# ROBOTIQ_BACKEND=mock|real  ROBOTIQ_HOST=192.168.1.1  ROBOTIQ_SOCKET=/tmp/robotiq.sock
+#
+#   robotiq activate
+#   robotiq open
+#   robotiq close
+#   robotiq move --position 128
+#   robotiq move-mm --distance 40.0
+#   robotiq status
+#   robotiq calibrate

@@ -1,0 +1,20 @@
+# Elephant Robotics myCobot 280 Joint Limits
+# Source: pymycobot SDK joint definitions
+# Status: COMPLETE — all 6 joints with +/-165 deg limits from SDK
+# URDF: available in mycobot_ros2
+
+robot: mycobot-280
+dof: 6
+units: radians
+source: pymycobot_sdk
+urdf_available: true  # mycobot_ros2
+
+joints:
+
+  # ── myCobot Joints (6 DOF, all +/-165 deg) ────────────
+  - { name: J1, index: 0, lower: -2.8798, upper: 2.8798, kp: 20, kd: 2, group: arm }
+  - { name: J2, index: 1, lower: -2.8798, upper: 2.8798, kp: 20, kd: 2, group: arm }
+  - { name: J3, index: 2, lower: -2.8798, upper: 2.8798, kp: 20, kd: 2, group: arm }
+  - { name: J4, index: 3, lower: -2.8798, upper: 2.8798, kp: 20, kd: 2, group: arm }
+  - { name: J5, index: 4, lower: -2.8798, upper: 2.8798, kp: 20, kd: 2, group: arm }
+  - { name: J6, index: 5, lower: -2.8798, upper: 2.8798, kp: 20, kd: 2, group: arm }

@@ -1,0 +1,25 @@
+[project]
+name = "unitree-cli"
+version = "0.2.0"
+description = "Agent-native CLI for Unitree robots. --help IS the LLM system prompt."
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+real = ["unitree_sdk2py"]
+yaml = ["PyYAML>=6.0"]
+test = ["pytest>=7.0"]
+
+[project.scripts]
+unitree = "unitree_cli.cli:main"
+robot = "robot_cli:main"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["unitree_cli"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

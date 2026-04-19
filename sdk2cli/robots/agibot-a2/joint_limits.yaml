@@ -1,0 +1,198 @@
+# AGIBOT A2 Joint Limits
+# Source: AimDK SDK (https://github.com/zengury/sdks)
+# Status: partial — arm/head/hand from SDK, waist from protobuf, legs from RL (not exposed)
+# URDF: not publicly available
+
+robot: agibot-a2
+dof: 28  # 14 arm + 2 head + 12 hand (legs RL-controlled, not listed)
+units: radians
+source: sdk
+
+joints:
+
+  # ── Arms (14 DOF, 7 per arm) ──────────────────────────
+  # Source: examples/mc/arm.py joint names + GetJointParam() RPC
+  - name: left_arm_joint1
+    index: 13
+    type: revolute
+    lower: -3.14
+    upper: 3.14
+    default_kp: 80
+    default_kd: 2
+    group: left_arm
+    description: shoulder pitch
+
+  - name: left_arm_joint2
+    index: 14
+    type: revolute
+    lower: -1.57
+    upper: 2.62
+    default_kp: 80
+    default_kd: 2
+    group: left_arm
+    description: shoulder roll
+
+  - name: left_arm_joint3
+    index: 15
+    type: revolute
+    lower: -3.14
+    upper: 3.14
+    default_kp: 60
+    default_kd: 1
+    group: left_arm
+    description: shoulder yaw
+
+  - name: left_arm_joint4
+    index: 16
+    type: revolute
+    lower: -2.09
+    upper: 0.17
+    default_kp: 60
+    default_kd: 1
+    group: left_arm
+    description: elbow pitch
+
+  - name: left_arm_joint5
+    index: 17
+    type: revolute
+    lower: -3.14
+    upper: 3.14
+    default_kp: 40
+    default_kd: 1
+    group: left_arm
+    description: wrist roll
+
+  - name: left_arm_joint6
+    index: 18
+    type: revolute
+    lower: -1.57
+    upper: 1.57
+    default_kp: 40
+    default_kd: 1
+    group: left_arm
+    description: wrist pitch
+
+  - name: left_arm_joint7
+    index: 19
+    type: revolute
+    lower: -1.57
+    upper: 1.57
+    default_kp: 40
+    default_kd: 1
+    group: left_arm
+    description: wrist yaw
+
+  - name: right_arm_joint1
+    index: 20
+    lower: -3.14
+    upper: 3.14
+    default_kp: 80
+    default_kd: 2
+    group: right_arm
+    description: shoulder pitch
+
+  - name: right_arm_joint2
+    index: 21
+    lower: -2.62
+    upper: 1.57
+    default_kp: 80
+    default_kd: 2
+    group: right_arm
+    description: shoulder roll
+
+  - name: right_arm_joint3
+    index: 22
+    lower: -3.14
+    upper: 3.14
+    default_kp: 60
+    default_kd: 1
+    group: right_arm
+    description: shoulder yaw
+
+  - name: right_arm_joint4
+    index: 23
+    lower: -2.09
+    upper: 0.17
+    default_kp: 60
+    default_kd: 1
+    group: right_arm
+    description: elbow pitch
+
+  - name: right_arm_joint5
+    index: 24
+    lower: -3.14
+    upper: 3.14
+    default_kp: 40
+    default_kd: 1
+    group: right_arm
+    description: wrist roll
+
+  - name: right_arm_joint6
+    index: 25
+    lower: -1.57
+    upper: 1.57
+    default_kp: 40
+    default_kd: 1
+    group: right_arm
+    description: wrist pitch
+
+  - name: right_arm_joint7
+    index: 26
+    lower: -1.57
+    upper: 1.57
+    default_kp: 40
+    default_kd: 1
+    group: right_arm
+    description: wrist yaw
+
+  # ── Head (2 DOF) ──────────────────────────────────────
+  # Source: examples/mc/neck.py
+  - name: head_yaw
+    index: 27
+    lower: -0.785
+    upper: 0.785
+    default_kp: 20
+    default_kd: 0.5
+    group: head
+    description: yaw (shake left/right), ±45°
+
+  - name: head_pitch
+    index: 28
+    lower: -0.401
+    upper: 0.401
+    default_kp: 20
+    default_kd: 0.5
+    group: head
+    description: pitch (nod up/down), ±23°
+
+  # ── Hands (12 DOF, 6 per hand) ────────────────────────
+  # Source: examples/mc/hand.py, position units 0-2000, torque 0-5700
+  # Note: NOT in radians — unitless position 0 (open) to 2000 (closed)
+  - { name: L_thumb_swing,  group: left_hand,  lower: 0, upper: 2000, units: position }
+  - { name: L_thumb_curl,   group: left_hand,  lower: 0, upper: 2000, units: position }
+  - { name: L_index,        group: left_hand,  lower: 0, upper: 2000, units: position }
+  - { name: L_middle,       group: left_hand,  lower: 0, upper: 2000, units: position }
+  - { name: L_ring,         group: left_hand,  lower: 0, upper: 2000, units: position }
+  - { name: L_pinky,        group: left_hand,  lower: 0, upper: 2000, units: position }
+  - { name: R_thumb_swing,  group: right_hand, lower: 0, upper: 2000, units: position }
+  - { name: R_thumb_curl,   group: right_hand, lower: 0, upper: 2000, units: position }
+  - { name: R_index,        group: right_hand, lower: 0, upper: 2000, units: position }
+  - { name: R_middle,       group: right_hand, lower: 0, upper: 2000, units: position }
+  - { name: R_ring,         group: right_hand, lower: 0, upper: 2000, units: position }
+  - { name: R_pinky,        group: right_hand, lower: 0, upper: 2000, units: position }
+
+  # ── Waist (6 DOF pose) ─────────────────────────────────
+  # Source: protocol/protobuf waist.proto
+  - { name: waist_z,     group: waist, lower: -0.15,   upper: 0.04,   units: meters }
+  - { name: waist_roll,  group: waist, lower: -0.5236, upper: 0.5236 }
+  - { name: waist_pitch, group: waist, lower: -0.5236, upper: 0.5236 }
+  - { name: waist_yaw,   group: waist, lower: -0.5236, upper: 0.5236 }
+
+  # ── Legs (RL-controlled, limits unknown) ──────────────
+  # TODO: extract from URDF when available
+
+arm_home:
+  left:  [0.0, 1.2, 0.0, -0.5, 1.5, 0.0, 0.0]
+  right: [0.0, -1.2, 0.0, 0.5, 1.5, 0.0, 0.0]
+
+urdf_available: false

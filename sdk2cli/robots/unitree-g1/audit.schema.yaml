@@ -1,0 +1,112 @@
+# Audit log schema for Unitree G1 CLI
+# Every command executed through the daemon is logged to audit.jsonl.
+# Logs are append-only and never modified.
+
+version: "2.0.0"
+format: jsonl                            # one JSON object per line
+path: /var/log/unitree-cli/audit.jsonl   # configurable via UNITREE_AUDIT_LOG
+rotation:
+  max_size_mb: 100                       # rotate when file exceeds 100 MB
+  max_files: 10                          # keep last 10 rotated files
+  compress: gzip                         # .jsonl.gz for rotated files
+
+# ── Record schema ─────────────────────────────────────────────────────
+# Every line in audit.jsonl conforms to this schema.
+#
+# Example record:
+# {"ts":"2026-04-12T10:30:00.123Z","seq":42,"session":"a1b2c3","user":"agent-claude",
+#  "cmd":"loco.move","args":{"vx":0.3,"vy":0,"vyaw":0},"risk":"caution",
+#  "policy":"auto","result":"ok","latency_us":240,
+#  "state_before":{"fsm_id":200},"state_after":{"fsm_id":200}}
+
+fields:
+  ts:
+    type: string
+    format: ISO-8601 UTC with milliseconds
+    description: "Timestamp when command was received by daemon"
+    example: "2026-04-12T10:30:00.123Z"
+
+  seq:
+    type: integer
+    description: "Monotonically increasing sequence number per daemon session"
+
+  session:
+    type: string
+    description: "Daemon session ID (regenerated on each daemon start)"
+
+  user:
+    type: string
+    description: "Caller identity: 'cli', 'repl', 'agent-<name>', or socket peer"
+
+  cmd:
+    type: string
+    description: "Command name as dispatched (e.g. 'loco.move', 'joint.set')"
+
+  args:
+    type: object
+    description: "Command arguments as received (after type coercion)"
+
+  risk:
+    type: string
+    enum: [safe, caution, danger]
+    description: "Risk level from policy.yaml at time of execution"
+
+  policy:
+    type: string
+    enum: [auto, confirm, deny, emergency]
+    description: "Approval mode that was applied"
+
+  result:
+    type: string
+    enum: [ok, safety_error, policy_denied, internal_error, timeout]
+    description: "Execution outcome"
+
+  error:
+    type: string
+    nullable: true
+    description: "Error message if result != ok"
+
+  latency_us:
+    type: integer
+    description: "End-to-end command latency in microseconds (dispatch + execute)"
+
+  state_before:
+    type: object
+    nullable: true
+    description: "Relevant state snapshot before execution (for undo-eligible commands)"
+    note: "Only populated when policy.undo=true for this command"
+
+  state_after:
+    type: object
+    nullable: true
+    description: "Relevant state snapshot after execution"
+
+# ── Replay ────────────────────────────────────────────────────────────
+# audit.jsonl can be replayed for regression testing:
+#
+#   cat audit.jsonl | jq -c 'select(.result=="ok")' | \
+#     while read line; do
+#       cmd=$(echo $line | jq -r .cmd)
+#       args=$(echo $line | jq -c .args)
+#       echo "{\"cmd\":\"$cmd\",\"args\":$args}" | nc -U /tmp/unitree.sock
+#     done
+#
+# Or with the built-in replay tool:
+#   unitree audit replay audit.jsonl [--dry-run] [--speed 2.0]
+#
+# Replay respects policy.yaml: danger commands still require confirmation
+# unless --force is passed.
+
+# ── Regression test extraction ────────────────────────────────────────
+# Extract safety-critical sequences for CI:
+#
+#   cat audit.jsonl | jq -c 'select(.risk=="danger")' > danger_commands.jsonl
+#   cat audit.jsonl | jq -c 'select(.result=="safety_error")' > safety_catches.jsonl
+#
+# These become golden test cases: "this command MUST be caught by safety."
+
+# ── Correlation ───────────────────────────────────────────────────────
+# To correlate audit logs with agent conversations:
+#   - Agent should pass {"_trace_id": "conv-abc-123"} in args
+#   - Daemon preserves it in the audit record under args._trace_id
+#   - Query: jq 'select(.args._trace_id=="conv-abc-123")' audit.jsonl

@@ -1,0 +1,15 @@
+# Robotiq 2F Gripper Joint Limits
+# Source: pyRobotiqGripper SDK (Modbus RTU over RS485/TCP)
+# Status: COMPLETE — 1 DOF normalized position from SDK
+# URDF: available in ros2_robotiq_gripper
+
+robot: robotiq-2f
+dof: 1  # single finger axis, 0=open 1=closed
+units: normalized  # 0.0 (open) to 1.0 (closed)
+source: pyrobotiq_gripper_sdk
+urdf_available: true  # ros2_robotiq_gripper
+
+joints:
+
+  # ── Finger (1 DOF) ────────────────────────────────────
+  - { name: finger, index: 0, lower: 0.0, upper: 1.0, kp: 10, kd: 1, group: gripper }

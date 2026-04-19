@@ -1,0 +1,73 @@
+# version: 0.1.0
+# robot: elephant-mycobot
+# sdk: pymycobot (Serial USB)
+# policy: policy.yaml
+
+mycobot — Elephant Robotics myCobot 280 (6 DOF, serial USB, pymycobot SDK)
+
+# ── MOTION COMMANDS ─────────────────────────────────────────────────
+
+mycobot move-angles --angles F,F,F,F,F,F [--speed I=50]
+    # [caution] Move to joint angles (degrees). Uses send_angles().
+mycobot move-coords --coords F,F,F,F,F,F [--speed I=50]
+    # [caution] Move to cartesian coords (x,y,z,rx,ry,rz mm/deg). Uses send_coords().
+mycobot get-angles                             # [safe]    Current joint angles (degrees).
+mycobot get-coords                             # [safe]    Current TCP coordinates.
+
+# ── GRIPPER ─────────────────────────────────────────────────────────
+
+mycobot gripper open                           # [safe]    Open gripper fully.
+mycobot gripper close                          # [caution] Close gripper fully.
+mycobot gripper set --value I [--speed I=50]   # [caution] Set gripper value 0-100.
+
+# ── POWER & SERVOS ──────────────────────────────────────────────────
+
+mycobot power on                               # [caution] Power on all servos.
+mycobot power off                              # [safe]    Power off all servos.
+mycobot release                                # [caution] Release all servos (freedrive / gravity comp).
+mycobot is-moving                              # [safe]    Check if robot is currently moving.
+
+# ── DRAG TEACH ──────────────────────────────────────────────────────
+
+mycobot drag start                             # [caution] Start recording drag-teach trajectory.
+mycobot drag stop                              # [safe]    Stop recording.
+mycobot drag play [--speed I=50]               # [caution] Replay recorded trajectory.
+
+# ── JOINT CONTROL ───────────────────────────────────────────────────
+
+mycobot joint get <id:I|name:S|all>            # [safe]    Read joint position, velocity, torque.
+mycobot joint set <id:I|name:S> --q F          # [caution] Command single joint position (rad).
+    [--kp F] [--kd F] [--dq F] [--tau F]
+mycobot joint list                             # [safe]    All 6 joint states.
+
+# ── SYSTEM ──────────────────────────────────────────────────────────
+
+mycobot daemon start|stop|status               # [safe]
+mycobot shell                                  # [safe]    Interactive REPL.
+mycobot bench [--count I=1000]                 # [safe]    Round-trip latency benchmark.
+mycobot manifest                               # [safe]    Print this file.
+
+# ── MYCOBOT JOINT MAP (6 DOF) ──────────────────────────────────────
+#
+#  Joint 0: J1  ±165° (±2.88 rad)
+#  Joint 1: J2  ±165° (±2.88 rad)
+#  Joint 2: J3  ±165° (±2.88 rad)
+#  Joint 3: J4  ±165° (±2.88 rad)
+#  Joint 4: J5  ±165° (±2.88 rad)
+#  Joint 5: J6  ±165° (±2.88 rad)
+#
+#  Model: myCobot 280 (M5Stack / Pi / Jetson Nano)
+#  Communication: Serial USB (default /dev/ttyUSB0, 115200 baud)
+#  SDK: pip install pymycobot
+#
+# MYCOBOT_BACKEND=mock|real  MYCOBOT_PORT=/dev/ttyUSB0  MYCOBOT_SOCKET=/tmp/mycobot.sock
+#
+#   mycobot power on
+#   mycobot move-angles --angles 0,0,0,0,0,0 --speed 80
+#   mycobot move-coords --coords 200,0,300,0,0,0
+#   mycobot get-angles
+#   mycobot gripper close
+#   mycobot release
+#   mycobot drag start
+#   mycobot drag stop
+#   mycobot drag play

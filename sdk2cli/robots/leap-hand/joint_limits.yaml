@@ -1,0 +1,36 @@
+# LEAP Hand Joint Limits
+# Source: Dynamixel servo definitions from leap_hand SDK
+# Status: COMPLETE — all 16 joints (4 fingers x 4 DOF) with limits from SDK
+# URDF: available in LEAP_Hand_Sim
+
+robot: leap-hand
+dof: 16  # 4 fingers x 4 joints
+units: radians
+source: leap_hand_dynamixel
+urdf_available: true  # LEAP_Hand_Sim
+
+joints:
+
+  # ── Index Finger (4 DOF) ──────────────────────────────
+  - { name: index_mcp_abd,  index: 0,  lower: -0.35, upper: 0.35, kp: 10, kd: 1, group: index }
+  - { name: index_mcp_flex, index: 1,  lower: 0.0,   upper: 2.09, kp: 10, kd: 1, group: index }
+  - { name: index_pip,      index: 2,  lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: index }
+  - { name: index_dip,      index: 3,  lower: 0.0,   upper: 1.75, kp: 10, kd: 1, group: index }
+
+  # ── Middle Finger (4 DOF) ─────────────────────────────
+  - { name: middle_mcp_abd,  index: 4,  lower: -0.35, upper: 0.35, kp: 10, kd: 1, group: middle }
+  - { name: middle_mcp_flex, index: 5,  lower: 0.0,   upper: 2.09, kp: 10, kd: 1, group: middle }
+  - { name: middle_pip,      index: 6,  lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: middle }
+  - { name: middle_dip,      index: 7,  lower: 0.0,   upper: 1.75, kp: 10, kd: 1, group: middle }
+
+  # ── Ring Finger (4 DOF) ───────────────────────────────
+  - { name: ring_mcp_abd,  index: 8,  lower: -0.35, upper: 0.35, kp: 10, kd: 1, group: ring }
+  - { name: ring_mcp_flex, index: 9,  lower: 0.0,   upper: 2.09, kp: 10, kd: 1, group: ring }
+  - { name: ring_pip,      index: 10, lower: 0.0,   upper: 1.92, kp: 10, kd: 1, group: ring }
+  - { name: ring_dip,      index: 11, lower: 0.0,   upper: 1.75, kp: 10, kd: 1, group: ring }
+
+  # ── Thumb (4 DOF) ─────────────────────────────────────
+  - { name: thumb_mcp_abd,  index: 12, lower: -0.79, upper: 0.79, kp: 10, kd: 1, group: thumb }
+  - { name: thumb_mcp_flex, index: 13, lower: 0.0,   upper: 1.57, kp: 10, kd: 1, group: thumb }
+  - { name: thumb_pip,      index: 14, lower: 0.0,   upper: 1.75, kp: 10, kd: 1, group: thumb }
+  - { name: thumb_dip,      index: 15, lower: 0.0,   upper: 1.75, kp: 10, kd: 1, group: thumb }

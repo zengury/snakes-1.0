@@ -1,0 +1,69 @@
+# version: 2.0.0
+# robot: agibot-d1
+# sdk: agibot_D1_Edu-Ultra (C++/Python)
+# policy: policy.yaml
+
+agibot-d1 — AGIBOT D1 quadruped robot dog (12 DOF, WiFi/Ethernet, C++/Python SDK)
+
+# ── HIGH-LEVEL MOTION ─────────────────────────────────────────────────
+
+agibot-d1 stand-up                             # [caution] Rise from lying to standing posture.
+agibot-d1 lie-down                             # [caution] Lower to lying posture.
+agibot-d1 move --vx F=0 --vy F=0 --yaw-rate F=0
+    # [caution] Velocity command. vx: forward m/s, vy: lateral, yaw_rate: rad/s.
+agibot-d1 jump                                 # [danger]  Vertical jump. Ensure clearance above.
+agibot-d1 front-jump                           # [danger]  Forward leap. Ensure landing zone clear.
+agibot-d1 backflip                             # [danger]  Backflip. Requires open space, flat ground.
+agibot-d1 shake-hand                           # [safe]    Extend front paw for handshake gesture.
+agibot-d1 attitude --roll F=0 --pitch F=0 --yaw F=0
+    # [caution] Body attitude control (rad). Keeps feet planted.
+agibot-d1 stop                                 # [safe]    Halt all motion, maintain standing.
+
+# ── LOW-LEVEL JOINT CONTROL ──────────────────────────────────────────
+
+agibot-d1 motor set <index:I> --angle F [--velocity F=0] [--torque F=0]
+    # [danger]  Direct joint angle(rad)/velocity(rad/s)/torque(Nm) control.
+    #           REQUIRES high-level mode disabled first.
+agibot-d1 motor get <index:I|all>
+    # [safe]    Read motor state: angle, velocity, torque, temperature.
+
+# ── SENSORS (IMU + motor feedback) ───────────────────────────────────
+
+agibot-d1 imu get [--stream --hz I=50]
+    # [safe]    quaternion(wxyz), rpy(rad), accel(m/s²), gyro(rad/s).
+agibot-d1 imu quaternion                       # [safe]    Shortcut: just quaternion.
+agibot-d1 imu rpy                              # [safe]    Shortcut: just roll/pitch/yaw.
+
+# ── SYSTEM ────────────────────────────────────────────────────────────
+
+agibot-d1 undo [--steps I=1]                   # [safe]
+agibot-d1 daemon start|stop|status             # [safe]
+agibot-d1 shell                                # [safe]
+agibot-d1 manifest                             # [safe]
+
+# ── D1 JOINT MAP (12 DOF) ────────────────────────────────────────────
+#
+#  Index  Joint          Leg
+#  0      FR_hip         Front Right
+#  1      FR_thigh       Front Right
+#  2      FR_calf        Front Right
+#  3      FL_hip         Front Left
+#  4      FL_thigh       Front Left
+#  5      FL_calf        Front Left
+#  6      RR_hip         Rear Right
+#  7      RR_thigh       Rear Right
+#  8      RR_calf        Rear Right
+#  9      RL_hip         Rear Left
+#  10     RL_thigh       Rear Left
+#  11     RL_calf        Rear Left
+#
+# Network: WiFi 192.168.234.1 | Ethernet 192.168.168.168
+# Max speed: 3.7 m/s | Slope: 40° | Jump: 35cm | IP54
+
+# AGIBOT_BACKEND=mock|real  AGIBOT_SOCKET=/tmp/agibot-d1.sock
+#
+#   agibot-d1 stand-up
+#   agibot-d1 move --vx 1.0
+#   agibot-d1 jump
+#   agibot-d1 imu get --stream --hz 10
+#   agibot-d1 motor get all

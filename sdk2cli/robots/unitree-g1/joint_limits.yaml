@@ -1,0 +1,53 @@
+# Unitree G1 Joint Limits
+# Source: unitree_sdk2py G1JointIndex + G1_JOINT_LIMITS dict
+# Status: COMPLETE — all 29 joints with limits and kp/kd from SDK source
+# URDF: available externally (unitree_ros2)
+
+robot: unitree-g1
+dof: 29  # 12 leg + 3 waist + 14 arm
+units: radians
+source: unitree_sdk2py
+urdf_available: true  # external: github.com/unitreerobotics/unitree_ros2
+
+joints:
+
+  # ── Left Leg (6 DOF) ──────────────────────────────────
+  - { name: LeftHipPitch,    index: 0,  lower: -1.54,  upper: 1.54,  kp: 60,  kd: 1, group: left_leg }
+  - { name: LeftHipRoll,     index: 1,  lower: -0.79,  upper: 0.79,  kp: 60,  kd: 1, group: left_leg }
+  - { name: LeftHipYaw,      index: 2,  lower: -1.54,  upper: 1.54,  kp: 60,  kd: 1, group: left_leg }
+  - { name: LeftKnee,        index: 3,  lower: -0.17,  upper: 2.44,  kp: 100, kd: 2, group: left_leg }
+  - { name: LeftAnklePitch,  index: 4,  lower: -0.79,  upper: 0.79,  kp: 40,  kd: 1, group: left_leg }
+  - { name: LeftAnkleRoll,   index: 5,  lower: -0.52,  upper: 0.52,  kp: 40,  kd: 1, group: left_leg }
+
+  # ── Right Leg (6 DOF) ─────────────────────────────────
+  - { name: RightHipPitch,   index: 6,  lower: -1.54,  upper: 1.54,  kp: 60,  kd: 1, group: right_leg }
+  - { name: RightHipRoll,    index: 7,  lower: -0.79,  upper: 0.79,  kp: 60,  kd: 1, group: right_leg }
+  - { name: RightHipYaw,     index: 8,  lower: -1.54,  upper: 1.54,  kp: 60,  kd: 1, group: right_leg }
+  - { name: RightKnee,       index: 9,  lower: -0.17,  upper: 2.44,  kp: 100, kd: 2, group: right_leg }
+  - { name: RightAnklePitch, index: 10, lower: -0.79,  upper: 0.79,  kp: 40,  kd: 1, group: right_leg }
+  - { name: RightAnkleRoll,  index: 11, lower: -0.52,  upper: 0.52,  kp: 40,  kd: 1, group: right_leg }
+
+  # ── Waist (3 DOF) ─────────────────────────────────────
+  - { name: WaistYaw,        index: 12, lower: -1.54,  upper: 1.54,  kp: 60,  kd: 1, group: waist }
+  - { name: WaistRoll,       index: 13, lower: -0.79,  upper: 0.79,  kp: 40,  kd: 1, group: waist }
+  - { name: WaistPitch,      index: 14, lower: -0.79,  upper: 0.79,  kp: 40,  kd: 1, group: waist }
+
+  # ── Left Arm (7 DOF) ──────────────────────────────────
+  - { name: LeftShoulderPitch,  index: 15, lower: -3.14, upper: 3.14,  kp: 40, kd: 1, group: left_arm }
+  - { name: LeftShoulderRoll,   index: 16, lower: -1.57, upper: 2.97,  kp: 40, kd: 1, group: left_arm }
+  - { name: LeftShoulderYaw,    index: 17, lower: -3.14, upper: 3.14,  kp: 40, kd: 1, group: left_arm }
+  - { name: LeftElbow,          index: 18, lower: -0.17, upper: 2.70,  kp: 40, kd: 1, group: left_arm }
+  - { name: LeftWristRoll,      index: 19, lower: -3.14, upper: 3.14,  kp: 40, kd: 1, group: left_arm }
+  - { name: LeftWristPitch,     index: 20, lower: -1.57, upper: 1.57,  kp: 40, kd: 1, group: left_arm }
+  - { name: LeftWristYaw,       index: 21, lower: -3.14, upper: 3.14,  kp: 40, kd: 1, group: left_arm }
+
+  # ── Right Arm (7 DOF) ─────────────────────────────────
+  - { name: RightShoulderPitch, index: 22, lower: -3.14, upper: 3.14,  kp: 40, kd: 1, group: right_arm }
+  - { name: RightShoulderRoll,  index: 23, lower: -2.97, upper: 1.57,  kp: 40, kd: 1, group: right_arm }
+  - { name: RightShoulderYaw,   index: 24, lower: -3.14, upper: 3.14,  kp: 40, kd: 1, group: right_arm }
+  - { name: RightElbow,         index: 25, lower: -0.17, upper: 2.70,  kp: 40, kd: 1, group: right_arm }
+  - { name: RightWristRoll,     index: 26, lower: -3.14, upper: 3.14,  kp: 40, kd: 1, group: right_arm }
+  - { name: RightWristPitch,    index: 27, lower: -1.57, upper: 1.57,  kp: 40, kd: 1, group: right_arm }
+  - { name: RightWristYaw,      index: 28, lower: -3.14, upper: 3.14,  kp: 40, kd: 1, group: right_arm }
+
+control_period: 0.002  # 2ms (500Hz)
