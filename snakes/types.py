@@ -46,7 +46,7 @@ class ContentBlock:
     tool_use_id: Optional[str] = None
     tool_name: Optional[str] = None
     tool_input: Optional[Dict[str, Any]] = None
-    tool_result_content: Optional[str] = None
+    tool_result_content: Optional[Any] = None
     is_error: bool = False
 
 
@@ -93,7 +93,7 @@ class AgentToolCall:
 class AgentToolResult:
     tool_call_id: str
     tool_name: str
-    content: str
+    content: Any
     is_error: bool = False
     robot_state_snapshot: Optional[Dict[str, Any]] = None
 
@@ -103,7 +103,15 @@ class AgentTool:
     name: str
     description: str
     input_schema: Dict[str, Any]
-    execute: Callable[[Dict[str, Any]], Awaitable[str]]
+    execute: Callable[[Dict[str, Any]], Awaitable[Any]]
+
+    # Toolchain execution semantics (minimal, optional)
+    timeout_s: Optional[float] = None
+    max_retries: int = 0
+
+    # Optional: group name for simple anti-loop safeguards
+    group: Optional[str] = None
+
     is_concurrency_safe: Callable[[Dict[str, Any]], bool] = field(
         default_factory=lambda: lambda _: False
     )
@@ -120,7 +128,7 @@ class BeforeToolCallContext:
     blocked: bool = False
     block_reason: Optional[str] = None
     # Set by hook to substitute a different result
-    substitute_result: Optional[str] = None
+    substitute_result: Optional[Any] = None
 
 
 @dataclass
@@ -131,7 +139,7 @@ class AfterToolCallContext:
     messages: List[AgentMessage]
 
     # Set by hook to override the result sent back to the model
-    override_result: Optional[str] = None
+    override_result: Optional[Any] = None
     # Set by hook to inject an observation (e.g. robot state diff)
     observation: Optional[str] = None
 

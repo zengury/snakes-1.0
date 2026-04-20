@@ -49,8 +49,25 @@ class MemoryBridge:
         event = {"tool": tool_name, "args": args, "result": result,
                  "success": success, "phase": "end"}
         self._task_events.append(event)
+        # Store full ToolOutcome dict in EventLog for scoring/watch.
+        # Keep a stable top-level shape under tool_result.
+        tool_result = {
+            "name": tool_name,
+            "success": success,
+            # ToolOutcome contract fields
+            "outcome": result.get("outcome"),
+            "failure_type": result.get("failure_type"),
+            "phenomenon": result.get("phenomenon"),
+            "retryable": result.get("retryable"),
+            "metrics": result.get("metrics"),
+            # Execution context
+            "tool": result.get("tool", tool_name),
+            "args": result.get("args", args),
+            # Raw underlying result
+            "result": result.get("result", result),
+        }
         self.eventlog.write_cognitive(
-            {"tool_result": {"name": tool_name, "success": success, "result": result}},
+            {"tool_result": tool_result},
             tags=[tool_name.split(".")[0]],
         )
 

@@ -405,13 +405,75 @@ async def _execute_single_tool_call(
                 content=before_ctx.substitute_result,
             )
 
-    # --- execute ---
-    try:
-        raw_result = await tool.execute(tool_call.tool_input)
-        is_error = False
-    except Exception as exc:
-        raw_result = f"Error executing {tool_call.tool_name}: {exc}"
-        is_error = True
+    # --- execute (with minimal toolchain semantics: timeout + retry) ---
+    from snakes.semantics.outcome import normalize_tool_outcome
+
+    attempts = 0
+    retry_history: list[dict[str, Any]] = []
+
+    while True:
+        attempts += 1
+        try:
+            if tool.timeout_s is not None:
+                raw_result = await asyncio.wait_for(
+                    tool.execute(tool_call.tool_input), timeout=tool.timeout_s
+                )
+            else:
+                raw_result = await tool.execute(tool_call.tool_input)
+            is_error = False
+        except asyncio.TimeoutError:
+            raw_result = {
+                "outcome": "timeout",
+                "failure_type": "system",
+                "phenomenon": f"tool execution timed out after {tool.timeout_s}s",
+                "retryable": True,
+                "metrics": {
+                    "attempts": attempts,
+                    "latency_ms": int((tool.timeout_s or 0.0) * 1000),
+                },
+            }
+            is_error = True
+        except Exception as exc:
+            raw_result = {
+                "outcome": "fail",
+                "failure_type": "system",
+                "phenomenon": f"exception: {exc}",
+                "retryable": True,
+                "metrics": {
+                    "attempts": attempts,
+                },
+            }
+            is_error = True
+
+        # Decide retry based on normalized ToolOutcome-like result
+        norm = normalize_tool_outcome(raw_result)
+        outcome = norm.get("outcome")
+        failure_type = norm.get("failure_type")
+        retryable = bool(norm.get("retryable"))
+
+        if attempts <= tool.max_retries and retryable and failure_type == "system" and outcome in {"timeout", "fail", "partial"}:
+            retry_history.append({
+                "attempt": attempts,
+                "outcome": outcome,
+                "failure_type": failure_type,
+                "phenomenon": norm.get("phenomenon"),
+            })
+            continue
+
+        # Attach retry metadata for observability
+        if isinstance(raw_result, dict):
+            raw_result.setdefault("metrics", {})
+            if isinstance(raw_result["metrics"], dict):
+                raw_result["metrics"].setdefault("attempts", attempts)
+            raw_result.setdefault("retry_history", retry_history)
+        else:
+            raw_result = {
+                "outcome": "success",
+                "result": raw_result,
+                "metrics": {"attempts": attempts},
+                "retry_history": retry_history,
+            }
+        break
 
     # --- observe robot state (verify step) ---
     robot_state: Optional[Dict[str, Any]] = None
@@ -462,7 +524,7 @@ async def _execute_single_tool_call(
         try:
             summary = (
                 f"Tool {tool_call.tool_name} called with "
-                f"{tool_call.tool_input!r} -> {raw_result[:200]}"
+                f"{tool_call.tool_input!r} -> {str(raw_result)[:200]}"
             )
             await config.write_episodic_memory(summary)
         except Exception:

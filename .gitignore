@@ -2,3 +2,9 @@ __pycache__/
 *.pyc
 snakes.egg-info/
 eventlog/data/
+
+# macOS
+.DS_Store
+
+# runtime state
+.snakes_state.json

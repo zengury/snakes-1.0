@@ -15,13 +15,39 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command")
 
-    run_p = sub.add_parser("run", help="Run a scenario or free-form task")
-    run_p.add_argument("--robot", required=True, help="Robot identifier (e.g. agibot-x2)")
-    run_p.add_argument("--scenario", default=None, help="Scenario name (e.g. escape-room)")
+    run_p = sub.add_parser("run", help="Run a scenario (V2 golden-path runtime)")
+    run_p.add_argument("--scenario", default="escape-room", help="Scenario name")
     run_p.add_argument("--level", type=int, default=1, help="Scenario level")
-    run_p.add_argument("--task", default=None, help="Free-form task description")
+    run_p.add_argument("--seed", type=int, default=None, help="Random seed (reproducible failures)")
+
+    run_p.add_argument("--robot-md", default="ROBOT.md", help="Path to ROBOT.md")
+    run_p.add_argument("--roles-dir", default="roles", help="Roles directory")
+
+    run_p.add_argument("--provider", default="anthropic", choices=["anthropic", "openai", "mock"], help="LLM provider")
     run_p.add_argument("--model", default="claude-sonnet-4-20250514", help="LLM model name")
-    run_p.add_argument("--max-turns", type=int, default=50, help="Maximum agent turns")
+    run_p.add_argument("--max-turns", type=int, default=80, help="Maximum agent turns")
+    run_p.add_argument("--eventlog-dir", default="eventlog/data", help="EventLog output directory")
+    run_p.add_argument("--skillpack", action="append", default=[], help="Path to a skillpack (directory or skillpack.json)")
+
+    # Failure injection (mock scenarios)
+    run_p.add_argument("--p-vision-fail", type=float, default=0.0, help="Probability of vision failure")
+    run_p.add_argument("--p-manip-fail", type=float, default=0.0, help="Probability of manipulation failure")
+    run_p.add_argument("--p-system-timeout", type=float, default=0.0, help="Probability of system timeout")
+    run_p.add_argument("--p-system-disconnect", type=float, default=0.0, help="Probability of system disconnect")
+
+    score_p = sub.add_parser("score", help="Score a run from EventLog")
+    score_p.add_argument("--eventlog-dir", default="eventlog/data")
+    score_p.add_argument("--task-id", required=True)
+
+    replay_p = sub.add_parser("replay", help="Replay a run from EventLog (text)")
+    replay_p.add_argument("--eventlog-dir", default="eventlog/data")
+    replay_p.add_argument("--task-id", required=True)
+    replay_p.add_argument("--limit", type=int, default=200)
+
+    watch_p = sub.add_parser("watch", help="Watch a run live from EventLog")
+    watch_p.add_argument("--eventlog-dir", default="eventlog/data")
+    watch_p.add_argument("--task-id", required=True)
+    watch_p.add_argument("--interval", type=float, default=0.5)
 
     status_p = sub.add_parser("status", help="Show current agent state")
     status_p.add_argument("--json", dest="as_json", action="store_true", help="Output as JSON")
@@ -40,141 +66,233 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def find_robot_md(robot_name: str) -> Path:
-    candidates = [
-        Path(f"robots/{robot_name}/ROBOT.md"),
-        Path(f"ROBOT.md"),
-        Path(f"{robot_name}.md"),
-    ]
-    for p in candidates:
-        if p.exists():
-            return p
-    raise FileNotFoundError(f"No ROBOT.md found for robot '{robot_name}'")
-
-
-def load_scenario(name: str, level: int) -> dict[str, Any]:
-    scenario_dir = Path("scenarios") / name
-    manifest = scenario_dir / "manifest.json"
-    if not manifest.exists():
-        raise FileNotFoundError(f"Scenario '{name}' not found at {scenario_dir}")
-    data = json.loads(manifest.read_text())
-    levels = data.get("levels", {})
-    level_key = str(level)
-    if level_key not in levels:
-        raise ValueError(f"Level {level} not found in scenario '{name}'")
-    return {
-        "name": name,
-        "level": level,
-        "config": levels[level_key],
-        "description": data.get("description", ""),
-    }
-
-
-def build_system_prompt(robot_md_text: str, scenario: dict[str, Any] | None, task: str | None) -> str:
-    parts = [
-        "You are an agent controlling a robot. Here is your robot identity:\n",
-        robot_md_text,
-    ]
-    if scenario:
-        parts.append(f"\n\nScenario: {scenario['name']} (level {scenario['level']})")
-        parts.append(f"Description: {scenario['description']}")
-        parts.append(f"Config: {json.dumps(scenario['config'])}")
-    if task:
-        parts.append(f"\n\nTask: {task}")
-    return "\n".join(parts)
-
-
 async def run_agent(args: argparse.Namespace) -> int:
-    from snakes.robot_md import load_robot_md, render_robot_md
-    from snakes.tools import make_robot_tools, RobotExecutor
+    from snakes.runtime.runner import run_scenario
+    from snakes.scenarios import EscapeRoomMockScenario, FailureInjectionConfig
 
-    robot_md_path = find_robot_md(args.robot)
-    identity = load_robot_md(robot_md_path)
-    robot_md_text = render_robot_md(identity)
+    if args.scenario != "escape-room":
+        raise ValueError(f"Unsupported scenario in V2 runtime: {args.scenario}")
 
-    scenario = None
-    if args.scenario:
-        scenario = load_scenario(args.scenario, args.level)
-
-    system_prompt = build_system_prompt(robot_md_text, scenario, args.task)
-
-    manifest_path = Path(f"robots/{args.robot}/manifest.txt")
-    if manifest_path.exists():
-        manifest_text = manifest_path.read_text()
-    else:
-        manifest_text = ""
-
-    executor = RobotExecutor(robot_name=args.robot, use_subprocess=True)
-    tools = make_robot_tools(args.robot, manifest_text, executor) if manifest_text else []
-
-    try:
-        import anthropic
-    except ImportError:
-        print("Error: anthropic package required. Install with: pip install anthropic", file=sys.stderr)
-        return 1
-
-    client = anthropic.Anthropic()
-    messages: list[dict[str, Any]] = []
-
-    if args.task:
-        messages.append({"role": "user", "content": args.task})
-    elif scenario:
-        messages.append({"role": "user", "content": f"Begin {scenario['name']} level {scenario['level']}."})
-    else:
-        print("Error: either --scenario or --task is required", file=sys.stderr)
-        return 1
-
-    tool_schemas = [t.to_schema() for t in tools]
-    tool_map = {t.name: t for t in tools}
-
-    for turn in range(args.max_turns):
-        response = client.messages.create(
-            model=args.model,
-            max_tokens=4096,
-            system=system_prompt,
-            messages=messages,
-            tools=tool_schemas if tool_schemas else anthropic.NOT_GIVEN,
+    scenario = EscapeRoomMockScenario(
+        failure_cfg=FailureInjectionConfig(
+            seed=args.seed,
+            p_vision_fail=args.p_vision_fail,
+            p_manip_fail=args.p_manip_fail,
+            p_system_timeout=args.p_system_timeout,
+            p_system_disconnect=args.p_system_disconnect,
         )
+    )
 
-        assistant_content = response.content
-        messages.append({"role": "assistant", "content": assistant_content})
+    result = await run_scenario(
+        scenario,
+        robot_md_path=args.robot_md,
+        roles_dir=args.roles_dir,
+        level=args.level,
+        provider=args.provider,
+        model=args.model,
+        eventlog_dir=args.eventlog_dir,
+        seed=args.seed,
+        max_turns=args.max_turns,
+        skillpacks=args.skillpack,
+    )
 
-        tool_uses = [b for b in assistant_content if b.type == "tool_use"]
-        if not tool_uses:
-            for block in assistant_content:
-                if hasattr(block, "text"):
-                    print(block.text)
-            break
-
-        tool_results = []
-        for tool_use in tool_uses:
-            tool = tool_map.get(tool_use.name)
-            if tool is None:
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": tool_use.id,
-                    "content": f"Unknown tool: {tool_use.name}",
-                    "is_error": True,
-                })
-                continue
-            try:
-                result = await tool.execute(tool_use.input)
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": tool_use.id,
-                    "content": json.dumps(result),
-                })
-            except Exception as exc:
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": tool_use.id,
-                    "content": str(exc),
-                    "is_error": True,
-                })
-
-        messages.append({"role": "user", "content": tool_results})
+    print(json.dumps({
+        "task_id": result.task_id,
+        "outcome": result.outcome,
+        "score": result.score,
+    }, ensure_ascii=False, indent=2))
 
     return 0
+
+
+def cmd_score(args: argparse.Namespace) -> int:
+    from eventlog import EventLogReader
+
+    reader = EventLogReader(args.eventlog_dir)
+    entries = reader.query(task_id=args.task_id)
+    if not entries:
+        print(f"No entries found for task_id={args.task_id}")
+        return 1
+
+    # Prefer run_end score if present
+    score = None
+    for e in reversed(entries):
+        if e.cognitive and "run_end" in e.cognitive:
+            score = e.cognitive["run_end"].get("score")
+            break
+
+    # Aggregate failures by failure_type + retry attempts + latency breakdown
+    failure_counts: dict[str, int] = {}
+    failure_latency_ms: dict[str, int] = {}
+
+    retry_attempts_total = 0
+    timeouts = 0
+
+    tool_latency_ms_total = 0
+    tool_latency_by_group: dict[str, int] = {}
+
+    for e in entries:
+        if not (e.cognitive and "tool_result" in e.cognitive):
+            continue
+        tr = e.cognitive["tool_result"]
+
+        metrics = tr.get("metrics")
+        latency_ms = 0
+        attempts = None
+        if isinstance(metrics, dict):
+            if isinstance(metrics.get("latency_ms"), int):
+                latency_ms = metrics["latency_ms"]
+            if isinstance(metrics.get("attempts"), int):
+                attempts = metrics["attempts"]
+
+        tool_latency_ms_total += latency_ms
+        name = tr.get("name") or tr.get("tool") or "unknown"
+        group = str(name).split(".")[0] if isinstance(name, str) and "." in name else "unknown"
+        tool_latency_by_group[group] = tool_latency_by_group.get(group, 0) + latency_ms
+
+        if attempts is not None:
+            retry_attempts_total += max(0, attempts - 1)
+
+        if tr.get("outcome") == "timeout":
+            timeouts += 1
+
+        if tr.get("success") is True:
+            continue
+
+        ft = tr.get("failure_type") or "unknown"
+        failure_counts[ft] = failure_counts.get(ft, 0) + 1
+        failure_latency_ms[ft] = failure_latency_ms.get(ft, 0) + latency_ms
+
+    outcome = reader.get_outcome(args.task_id)
+    if score is None:
+        score = {"time_s": None, "escaped": outcome[0] == "success" if outcome else None}
+
+    print(json.dumps({
+        "task_id": args.task_id,
+        "outcome": outcome[0] if outcome else None,
+        "score": score,
+        "failure_counts": failure_counts,
+        "failure_latency_ms": failure_latency_ms,
+        "timeouts": timeouts,
+        "retry_attempts_total": retry_attempts_total,
+        "tool_latency_ms_total": tool_latency_ms_total,
+        "tool_latency_by_group": tool_latency_by_group,
+        "events": len(entries),
+    }, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_replay(args: argparse.Namespace) -> int:
+    from eventlog import EventLogReader
+
+    reader = EventLogReader(args.eventlog_dir)
+    entries = reader.query(task_id=args.task_id, limit=args.limit)
+    if not entries:
+        print(f"No entries found for task_id={args.task_id}")
+        return 1
+
+    for e in entries:
+        # Print compact timeline
+        if e.source == "cognitive" and e.cognitive:
+            if "reasoning" in e.cognitive:
+                print(f"{e.ts} [reasoning] {e.cognitive['reasoning']}")
+            elif "observation" in e.cognitive:
+                obs = e.cognitive["observation"]
+                print(f"{e.ts} [observe] room={obs.get('room')} objs={len(obs.get('visible_objects', []))} exits={obs.get('exits')}")
+            elif "tool_call" in e.cognitive:
+                tc = e.cognitive["tool_call"]
+                print(f"{e.ts} [tool_call] {tc.get('name')} {tc.get('arguments')}")
+            elif "tool_result" in e.cognitive:
+                tr = e.cognitive["tool_result"]
+                if tr.get("success") is True:
+                    print(f"{e.ts} [tool_result] {tr.get('name')} success=True")
+                else:
+                    print(
+                        f"{e.ts} [tool_result] {tr.get('name')} success=False "
+                        f"failure_type={tr.get('failure_type')} phenomenon={tr.get('phenomenon')}"
+                    )
+            elif "run_start" in e.cognitive:
+                print(f"{e.ts} [run_start] {e.cognitive['run_start']}")
+            elif "run_end" in e.cognitive:
+                print(f"{e.ts} [run_end] {e.cognitive['run_end']}")
+            else:
+                print(f"{e.ts} [cognitive] {e.cognitive}")
+        elif e.tags and "task_end" in e.tags:
+            print(f"{e.ts} [task_end] outcome={e.outcome} reason={e.failure_reason}")
+        else:
+            print(f"{e.ts} [{e.source}] tags={e.tags}")
+
+    return 0
+
+
+def cmd_watch(args: argparse.Namespace) -> int:
+    import time
+    from eventlog import EventLogReader
+
+    reader = EventLogReader(args.eventlog_dir)
+    last_seq = 0
+    failures: dict[str, int] = {}
+    start_ts = None
+
+    print(f"Watching task_id={args.task_id} (Ctrl+C to stop)")
+
+    try:
+        while True:
+            entries = reader.query(task_id=args.task_id)
+            new = [e for e in entries if e.seq > last_seq]
+            for e in new:
+                last_seq = max(last_seq, e.seq)
+
+                if start_ts is None and e.cognitive and "run_start" in e.cognitive:
+                    start_ts = e.ts
+
+                # Tool results
+                if e.cognitive and "tool_result" in e.cognitive:
+                    tr = e.cognitive["tool_result"]
+                    name = tr.get("name")
+                    success = tr.get("success")
+                    outcome = tr.get("outcome")
+                    ft = tr.get("failure_type")
+                    phen = tr.get("phenomenon")
+                    extra = ""
+                    attempts = None
+                    metrics = tr.get("metrics")
+                    if isinstance(metrics, dict):
+                        attempts = metrics.get("attempts")
+                    if success is False:
+                        extra = f" failure_type={ft} phenomenon={phen}"
+                    if attempts and attempts > 1:
+                        extra += f" attempts={attempts}"
+                    print(f"{e.ts} tool_result {name} outcome={outcome} success={success}{extra}")
+
+                # Invalid semantics warnings
+                if e.cognitive and "tool_outcome_invalid" in e.cognitive:
+                    info = e.cognitive["tool_outcome_invalid"]
+                    print(f"{e.ts} [WARN] invalid outcome for {info.get('tool')}: {info.get('reason')}")
+
+                # Observations
+                if e.cognitive and "observation" in e.cognitive:
+                    obs = e.cognitive["observation"]
+                    print(f"{e.ts} observe room={obs.get('room')} exits={obs.get('exits')} objs={len(obs.get('visible_objects', []))}")
+
+                # Count failures from structured outcomes (if present)
+                if e.cognitive and "tool_result" in e.cognitive:
+                    tr = e.cognitive["tool_result"]
+                    if tr.get("success") is False:
+                        ft = tr.get("failure_type") or "unknown"
+                        failures[ft] = failures.get(ft, 0) + 1
+
+                # Task end
+                if e.tags and "task_end" in e.tags:
+                    print(f"{e.ts} task_end outcome={e.outcome} reason={e.failure_reason}")
+
+            if failures:
+                summary = ", ".join(f"{k}={v}" for k, v in sorted(failures.items()))
+                print(f"  failures: {summary}")
+
+            time.sleep(args.interval)
+    except KeyboardInterrupt:
+        return 0
 
 
 def cmd_status(args: argparse.Namespace) -> int:
@@ -194,14 +312,12 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def cmd_memory_show() -> int:
-    try:
-        from snakes.memory_bridge import create_memory, query_relevant_memory
-    except ImportError:
-        print("memkit not installed. Install with: pip install snakes[memkit]", file=sys.stderr)
-        return 1
-    memory = create_memory("default")
-    result = query_relevant_memory(memory, "*")
-    print(json.dumps(result, indent=2, default=str))
+    print(
+        "Memory CLI is not yet implemented in Snakes 2.0. "
+        "In V2, episodic memory is a view over EventLog, and semantic skills "
+        "are promoted by the critic pipeline."
+    )
+    print("Use: cat eventlog/data/*.jsonl | tail -n 50")
     return 0
 
 
@@ -243,6 +359,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "run":
         return asyncio.run(run_agent(args))
+    elif args.command == "score":
+        return cmd_score(args)
+    elif args.command == "replay":
+        return cmd_replay(args)
+    elif args.command == "watch":
+        return cmd_watch(args)
     elif args.command == "status":
         return cmd_status(args)
     elif args.command == "memory":

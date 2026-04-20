@@ -27,10 +27,11 @@ class LLMClient:
     provider: str
     model: str
 
-    def __init__(self, provider: str, model: str, api_key: str):
+    def __init__(self, provider: str, model: str, api_key: str, *, base_url: str | None = None):
         self.provider = provider
         self.model = model
         self._api_key = api_key
+        self._base_url = base_url
         self._client: Any = None
 
     def _init_client(self) -> None:
@@ -42,7 +43,10 @@ class LLMClient:
             self._client = anthropic.AsyncAnthropic(api_key=self._api_key)
         elif self.provider == "openai":
             import openai
-            self._client = openai.AsyncOpenAI(api_key=self._api_key)
+            kwargs: dict[str, Any] = {"api_key": self._api_key}
+            if self._base_url:
+                kwargs["base_url"] = self._base_url
+            self._client = openai.AsyncOpenAI(**kwargs)
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -205,5 +209,5 @@ class LLMClient:
             yield StreamEvent(type=StreamEventType.ERROR, error=str(exc))
 
 
-def create_llm_client(provider: str, model: str, api_key: str) -> LLMClient:
-    return LLMClient(provider=provider, model=model, api_key=api_key)
+def create_llm_client(provider: str, model: str, api_key: str, *, base_url: str | None = None) -> LLMClient:
+    return LLMClient(provider=provider, model=model, api_key=api_key, base_url=base_url)
