@@ -40,6 +40,10 @@ snakes hackathon score
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full design.
 
+## Wiki (Design Philosophy)
+
+- [Failure-First Robot Runtime（面向密室逃脱通关）](docs/wiki/Design_Philosophy_Failure_First_Runtime.md)
+
 ## License
 
 MIT
