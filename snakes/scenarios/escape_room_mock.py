@@ -63,6 +63,10 @@ class EscapeRoomMockScenario:
             "visible_objects": [o.name for o in room.visible_objects()],
             "exits": list(room.exits.keys()),
             "inventory": [o.name for o in self._room.inventory],
+            "puzzles": [
+                {"index": i, "description": p.description, "solved": p.solved}
+                for i, p in enumerate(room.puzzles)
+            ],
             "moves": self._room.moves,
             "hints_used": self._room.hints_used,
             "escaped": self._room.escaped,
@@ -285,12 +289,13 @@ class EscapeRoomMockScenario:
             ),
             tool(
                 "arm.use",
-                "Use a held item to solve a puzzle.",
+                "Solve a puzzle by using an inventory item OR by entering an answer/code string (e.g., \"314\").",
                 {
                     "type": "object",
                     "properties": {
-                        "item": {"type": "string"},
-                        "puzzle_index": {"type": "integer"},
+                        "item": {"type": "string", "description": "Inventory item name (optional)"},
+                        "answer": {"type": "string", "description": "Free-form answer/code (optional)"},
+                        "puzzle_index": {"type": "integer", "description": "Puzzle index (0-based)"},
                     },
                 },
             ),

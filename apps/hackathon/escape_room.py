@@ -96,7 +96,16 @@ class EscapeRoom:
 
         for puzzle in room.puzzles:
             if not puzzle.solved and self._puzzle_blocks_exit(room, direction):
-                return {"ok": False, "error": "A puzzle blocks this exit"}
+                blocking = [
+                    {"index": i, "description": p.description, "solved": p.solved}
+                    for i, p in enumerate(room.puzzles)
+                    if not p.solved
+                ]
+                return {
+                    "ok": False,
+                    "error": "A puzzle blocks this exit",
+                    "blocking_puzzles": blocking,
+                }
 
         self.current_room = dest
         self.moves += 1
@@ -178,13 +187,29 @@ class EscapeRoom:
             if len(room.puzzles) == 1:
                 puzzle_index = 0
             else:
-                return {"ok": False, "error": "No such puzzle"}
+                return {
+                    "ok": False,
+                    "error": "No such puzzle",
+                    "available_puzzles": [
+                        {"index": i, "description": p.description, "solved": p.solved}
+                        for i, p in enumerate(room.puzzles)
+                    ],
+                }
         puzzle = room.puzzles[puzzle_index]
         if puzzle.solved:
             return {"ok": True, "already_solved": True}
         if puzzle.attempt(answer):
             return {"ok": True, "solved": True}
-        return {"ok": False, "error": "Wrong answer"}
+        return {
+            "ok": False,
+            "error": "Wrong answer",
+            "puzzle": {
+                "index": puzzle_index,
+                "description": puzzle.description,
+                "solved": puzzle.solved,
+                "hints_available": len(puzzle.hints),
+            },
+        }
 
     def use_hint(self, puzzle_index: int) -> dict[str, Any]:
         room = self.get_current_room()

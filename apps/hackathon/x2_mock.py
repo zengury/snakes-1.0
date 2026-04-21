@@ -124,7 +124,9 @@ class X2HackathonMock:
             return {"ok": True, "released": released}
 
         if action == "use":
-            item = args.get("item", "")
+            # NOTE: despite the param name, this can be either an inventory item name
+            # OR a free-form answer string (e.g., a code like "314").
+            item = args.get("item", "") or args.get("answer", "")
             puzzle_index = int(args.get("puzzle_index", 0))
             if not item:
                 holding = self.left_arm_holding or self.right_arm_holding
