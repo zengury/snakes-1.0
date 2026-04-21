@@ -21,7 +21,18 @@ class Puzzle:
     solved: bool = False
 
     def attempt(self, answer: str) -> bool:
-        if answer.strip().lower() == self.solution.strip().lower():
+        sol = self.solution.strip().lower()
+        ans = answer.strip().lower()
+
+        # Forgiving parsing for numeric-code puzzles: if the solution is digits-only,
+        # allow answers that include separators like "3-1-4" or "3 1 4".
+        if sol.isdigit():
+            ans_digits = "".join(ch for ch in ans if ch.isdigit())
+            if ans_digits == sol:
+                self.solved = True
+                return True
+
+        if ans == sol:
             self.solved = True
             return True
         return False
