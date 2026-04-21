@@ -110,9 +110,19 @@ class EscapeRoom:
         room = self.get_current_room()
         obj = room.find_object(object_name)
         if obj is None:
+            # Allow interacting with items in inventory.
             inv_obj = next((o for o in self.inventory if o.name.lower() == object_name.lower()), None)
             if inv_obj:
-                return {"ok": True, "object": inv_obj.name, "description": inv_obj.description}
+                result: dict[str, Any] = {"ok": True, "object": inv_obj.name, "description": inv_obj.description}
+                # If the inventory item is a container, reveal and extract its contents.
+                if inv_obj.contains:
+                    for contained in inv_obj.contains:
+                        contained.hidden = False
+                    result["found"] = [c.name for c in inv_obj.contains]
+                    # Extract to inventory so subsequent actions can reference them.
+                    self.inventory.extend(inv_obj.contains)
+                    inv_obj.contains = []
+                return result
             return {"ok": False, "error": f"No object named '{object_name}' here"}
 
         if not obj.interactable:
