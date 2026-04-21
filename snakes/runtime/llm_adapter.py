@@ -127,6 +127,7 @@ def make_stream_fn(client: LLMClient) -> Any:
             messages=provider_messages,
             tools=tool_defs,
             system_prompt=system_prompt,
+            max_tokens=max_tokens,
         ):
             if ev.type == StreamEventType.TEXT_DELTA:
                 yield ev.text, None

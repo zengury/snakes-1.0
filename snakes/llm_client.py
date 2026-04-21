@@ -55,14 +55,16 @@ class LLMClient:
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         system_prompt: str = "",
+        *,
+        max_tokens: int = 4096,
     ) -> AsyncIterator[StreamEvent]:
         self._init_client()
 
         if self.provider == "anthropic":
-            async for event in self._stream_anthropic(messages, tools, system_prompt):
+            async for event in self._stream_anthropic(messages, tools, system_prompt, max_tokens=max_tokens):
                 yield event
         elif self.provider == "openai":
-            async for event in self._stream_openai(messages, tools, system_prompt):
+            async for event in self._stream_openai(messages, tools, system_prompt, max_tokens=max_tokens):
                 yield event
 
     async def _stream_anthropic(
@@ -70,10 +72,12 @@ class LLMClient:
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None,
         system_prompt: str,
+        *,
+        max_tokens: int,
     ) -> AsyncIterator[StreamEvent]:
         kwargs: dict[str, Any] = {
             "model": self.model,
-            "max_tokens": 4096,
+            "max_tokens": max_tokens,
             "messages": messages,
         }
         if system_prompt:
@@ -131,6 +135,8 @@ class LLMClient:
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None,
         system_prompt: str,
+        *,
+        max_tokens: int,
     ) -> AsyncIterator[StreamEvent]:
         oai_messages: list[dict[str, Any]] = []
         if system_prompt:
@@ -155,6 +161,7 @@ class LLMClient:
             "model": self.model,
             "messages": oai_messages,
             "stream": True,
+            "max_tokens": max_tokens,
         }
         if oai_tools:
             kwargs["tools"] = oai_tools

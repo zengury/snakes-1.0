@@ -26,6 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--provider", default="anthropic", choices=["anthropic", "openai", "mock"], help="LLM provider")
     run_p.add_argument("--model", default="claude-sonnet-4-20250514", help="LLM model name")
     run_p.add_argument("--max-turns", type=int, default=80, help="Maximum agent turns")
+    run_p.add_argument("--max-tokens", type=int, default=1024, help="Max tokens per model response")
     run_p.add_argument("--eventlog-dir", default="eventlog/data", help="EventLog output directory")
     run_p.add_argument("--skillpack", action="append", default=[], help="Path to a skillpack (directory or skillpack.json)")
 
@@ -93,6 +94,7 @@ async def run_agent(args: argparse.Namespace) -> int:
         eventlog_dir=args.eventlog_dir,
         seed=args.seed,
         max_turns=args.max_turns,
+        max_tokens=args.max_tokens,
         skillpacks=args.skillpack,
     )
 

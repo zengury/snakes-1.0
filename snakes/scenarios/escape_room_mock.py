@@ -158,10 +158,14 @@ class EscapeRoomMockScenario:
                     "retryable": False,
                 }
             else:
+                err = raw.get("error", "unknown error")
+                ft = "unknown"
+                if isinstance(err, str) and err.lower().startswith("cannot see"):
+                    ft = "perception"
                 outcome = {
                     "outcome": "fail",
-                    "failure_type": "unknown",
-                    "phenomenon": raw.get("error", "unknown error"),
+                    "failure_type": ft,
+                    "phenomenon": err,
                     "retryable": True,
                 }
 

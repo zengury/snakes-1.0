@@ -54,6 +54,7 @@ async def run_scenario(
     eventlog_dir: str = "eventlog/data",
     seed: int | None = None,
     max_turns: int = 80,
+    max_tokens: int = 1024,
     skillpacks: list[str] | None = None,
 ) -> RunResult:
     """Run a scenario end-to-end with the Snakes agent loop.
@@ -194,7 +195,7 @@ async def run_scenario(
         stream_fn=stream_fn,
     )
 
-    agent = Agent(system_prompt=system_prompt, model=model, config=cfg)
+    agent = Agent(system_prompt=system_prompt, model=model, max_tokens=max_tokens, config=cfg)
 
     # B1/B2: optional skillpacks. We expose a single meta-tool `skill.run`.
     if skillpacks:
