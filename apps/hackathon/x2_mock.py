@@ -167,11 +167,29 @@ class X2HackathonMock:
                     if visible:
                         result["contains"] = [c.name for c in visible]
                 return result
-            return self.escape_room.look()
+            look = self.escape_room.look()
+            return {
+                "ok": True,
+                "result": {
+                    "room": look["room"],
+                    "description": look["description"],
+                    "visible_objects": look["objects"],
+                    "exits": look["exits"],
+                },
+            }
 
         if action == "scan":
             self.head_target = ""
-            return self.escape_room.look()
+            look = self.escape_room.look()
+            return {
+                "ok": True,
+                "result": {
+                    "room": look["room"],
+                    "description": look["description"],
+                    "visible_objects": look["objects"],
+                    "exits": look["exits"],
+                },
+            }
 
         return {"ok": False, "error": f"Unknown head action: {action}"}
 
