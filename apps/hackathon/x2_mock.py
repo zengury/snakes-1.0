@@ -139,6 +139,10 @@ class X2HackathonMock:
     def _handle_head(self, action: str, args: dict[str, Any]) -> dict[str, Any]:
         if action == "look":
             target = args.get("target", "")
+            # Common LLM behavior: target="room" to mean scan.
+            if target.lower() in {"room", "the room"}:
+                target = ""
+
             self.head_target = target
             if target:
                 room = self.escape_room.get_current_room()

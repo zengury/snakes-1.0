@@ -148,16 +148,37 @@ class EscapeRoom:
             return {"ok": False, "error": f"No object named '{object_name}' here"}
         if obj.hidden:
             return {"ok": False, "error": f"Cannot see {object_name}"}
+
+        # Remove from room graph
         room.objects = [o for o in room.objects if o.name != obj.name]
         for parent in room.objects:
             parent.contains = [c for c in parent.contains if c.name != obj.name]
+
+        # Add to inventory
         self.inventory.append(obj)
-        return {"ok": True, "picked_up": obj.name}
+
+        result: dict[str, Any] = {"ok": True, "picked_up": obj.name}
+
+        # If the picked object is a container, reveal and drop contents into the room.
+        # This prevents irreversible dead-ends where a hidden item is trapped inside a
+        # carried container without any way for the agent to discover it.
+        if obj.contains:
+            for contained in obj.contains:
+                contained.hidden = False
+            room.objects.extend(obj.contains)
+            result["found"] = [c.name for c in obj.contains]
+            obj.contains = []
+
+        return result
 
     def solve_puzzle(self, puzzle_index: int, answer: str) -> dict[str, Any]:
         room = self.get_current_room()
         if puzzle_index < 0 or puzzle_index >= len(room.puzzles):
-            return {"ok": False, "error": "No such puzzle"}
+            # Forgiving behavior: if there's exactly one puzzle, clamp to 0.
+            if len(room.puzzles) == 1:
+                puzzle_index = 0
+            else:
+                return {"ok": False, "error": "No such puzzle"}
         puzzle = room.puzzles[puzzle_index]
         if puzzle.solved:
             return {"ok": True, "already_solved": True}
