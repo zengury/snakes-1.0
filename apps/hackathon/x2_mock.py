@@ -102,7 +102,18 @@ class X2HackathonMock:
             if not target:
                 return {"ok": False, "error": "No target specified"}
             result = self.escape_room.pickup(target)
-            if result["ok"]:
+
+            # If the object isn't in the room graph, allow "equipping" it from
+            # inventory (common LLM behavior after picking something up).
+            if not result.get("ok") and isinstance(result.get("error"), str) and result["error"].startswith("No object named"):
+                inv_obj = next(
+                    (o for o in self.escape_room.inventory if o.name.lower() == target.lower()),
+                    None,
+                )
+                if inv_obj is not None:
+                    result = {"ok": True, "picked_up": inv_obj.name, "equipped": True, "description": inv_obj.description}
+
+            if result.get("ok") is True:
                 if side == "left":
                     self.left_arm_holding = target
                 else:

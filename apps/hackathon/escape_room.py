@@ -177,7 +177,9 @@ class EscapeRoom:
         # Add to inventory
         self.inventory.append(obj)
 
-        result: dict[str, Any] = {"ok": True, "picked_up": obj.name}
+        # Include description to reduce extra look calls (time-first) and help
+        # the agent immediately use newly acquired information (e.g., codes).
+        result: dict[str, Any] = {"ok": True, "picked_up": obj.name, "description": obj.description}
 
         # If the picked object is a container, reveal and drop contents into the room.
         # This prevents irreversible dead-ends where a hidden item is trapped inside a
