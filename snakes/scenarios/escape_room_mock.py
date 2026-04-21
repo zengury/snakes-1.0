@@ -58,7 +58,7 @@ class EscapeRoomMockScenario:
         assert self._room is not None
         # Observation is what the verifier sees. Keep it structured.
         room = self._room.get_current_room()
-        return {
+        obs = {
             "room": room.name,
             "visible_objects": [o.name for o in room.visible_objects()],
             "exits": list(room.exits.keys()),
@@ -68,6 +68,13 @@ class EscapeRoomMockScenario:
             "escaped": self._room.escaped,
             "level": self._room.level,
         }
+        if self._robot is not None:
+            obs.update({
+                "left_arm_holding": self._robot.left_arm_holding or "empty",
+                "right_arm_holding": self._robot.right_arm_holding or "empty",
+                "head_target": self._robot.head_target or "none",
+            })
+        return obs
 
     def is_done(self) -> bool:
         return bool(self._room and self._room.escaped)
@@ -223,11 +230,17 @@ class EscapeRoomMockScenario:
             ),
             tool(
                 "head.look",
-                "Look at a specific object or scan the room.",
+                "Look at a specific object.",
                 {
                     "type": "object",
                     "properties": {"target": {"type": "string"}},
+                    "required": ["target"],
                 },
+            ),
+            tool(
+                "head.scan",
+                "Scan the room (equivalent to a general look-around).",
+                {"type": "object", "properties": {}},
             ),
             tool(
                 "walk.to",
@@ -260,6 +273,14 @@ class EscapeRoomMockScenario:
                         "side": {"type": "string", "description": "left|right"},
                     },
                     "required": ["target"],
+                },
+            ),
+            tool(
+                "arm.release",
+                "Release whatever the specified arm is holding.",
+                {
+                    "type": "object",
+                    "properties": {"side": {"type": "string", "description": "left|right"}},
                 },
             ),
             tool(

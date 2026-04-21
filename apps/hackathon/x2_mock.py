@@ -148,7 +148,15 @@ class X2HackathonMock:
                 room = self.escape_room.get_current_room()
                 obj = room.find_object(target)
                 if obj is None:
-                    return {"ok": False, "error": f"Cannot see {target}"}
+                    # Also allow looking at inventory items (common after pickup).
+                    inv_obj = next(
+                        (o for o in self.escape_room.inventory if o.name.lower() == target.lower()),
+                        None,
+                    )
+                    if inv_obj is not None:
+                        obj = inv_obj
+                    else:
+                        return {"ok": False, "error": f"Cannot see {target}"}
                 result: dict[str, Any] = {
                     "ok": True,
                     "object": obj.name,
