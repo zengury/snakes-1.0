@@ -4,4 +4,5 @@
 
 ## 目录
 
+- [Current Runtime Capabilities (Snakes 2.0 mainline)](Current_Runtime_Capabilities.md)
 - [Design Philosophy — Failure-First Runtime](Design_Philosophy_Failure_First_Runtime.md)
