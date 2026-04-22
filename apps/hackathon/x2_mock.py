@@ -230,6 +230,10 @@ class X2HackathonMock:
             "result": {
                 "current_room": room.name,
                 "inventory": [o.name for o in self.escape_room.inventory],
+                "puzzles": [
+                    {"index": i, "description": p.description, "solved": p.solved}
+                    for i, p in enumerate(room.puzzles)
+                ],
                 "left_arm": self.left_arm_holding or "empty",
                 "right_arm": self.right_arm_holding or "empty",
                 "head_target": self.head_target or "none",
