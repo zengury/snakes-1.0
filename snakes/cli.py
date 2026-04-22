@@ -108,79 +108,14 @@ async def run_agent(args: argparse.Namespace) -> int:
 
 
 def cmd_score(args: argparse.Namespace) -> int:
-    from eventlog import EventLogReader
+    from snakes.runtime.score import aggregate_task
 
-    reader = EventLogReader(args.eventlog_dir)
-    entries = reader.query(task_id=args.task_id)
-    if not entries:
+    agg = aggregate_task(args.eventlog_dir, args.task_id)
+    if agg.events == 0:
         print(f"No entries found for task_id={args.task_id}")
         return 1
 
-    # Prefer run_end score if present
-    score = None
-    for e in reversed(entries):
-        if e.cognitive and "run_end" in e.cognitive:
-            score = e.cognitive["run_end"].get("score")
-            break
-
-    # Aggregate failures by failure_type + retry attempts + latency breakdown
-    failure_counts: dict[str, int] = {}
-    failure_latency_ms: dict[str, int] = {}
-
-    retry_attempts_total = 0
-    timeouts = 0
-
-    tool_latency_ms_total = 0
-    tool_latency_by_group: dict[str, int] = {}
-
-    for e in entries:
-        if not (e.cognitive and "tool_result" in e.cognitive):
-            continue
-        tr = e.cognitive["tool_result"]
-
-        metrics = tr.get("metrics")
-        latency_ms = 0
-        attempts = None
-        if isinstance(metrics, dict):
-            if isinstance(metrics.get("latency_ms"), int):
-                latency_ms = metrics["latency_ms"]
-            if isinstance(metrics.get("attempts"), int):
-                attempts = metrics["attempts"]
-
-        tool_latency_ms_total += latency_ms
-        name = tr.get("name") or tr.get("tool") or "unknown"
-        group = str(name).split(".")[0] if isinstance(name, str) and "." in name else "unknown"
-        tool_latency_by_group[group] = tool_latency_by_group.get(group, 0) + latency_ms
-
-        if attempts is not None:
-            retry_attempts_total += max(0, attempts - 1)
-
-        if tr.get("outcome") == "timeout":
-            timeouts += 1
-
-        if tr.get("success") is True:
-            continue
-
-        ft = tr.get("failure_type") or "unknown"
-        failure_counts[ft] = failure_counts.get(ft, 0) + 1
-        failure_latency_ms[ft] = failure_latency_ms.get(ft, 0) + latency_ms
-
-    outcome = reader.get_outcome(args.task_id)
-    if score is None:
-        score = {"time_s": None, "escaped": outcome[0] == "success" if outcome else None}
-
-    print(json.dumps({
-        "task_id": args.task_id,
-        "outcome": outcome[0] if outcome else None,
-        "score": score,
-        "failure_counts": failure_counts,
-        "failure_latency_ms": failure_latency_ms,
-        "timeouts": timeouts,
-        "retry_attempts_total": retry_attempts_total,
-        "tool_latency_ms_total": tool_latency_ms_total,
-        "tool_latency_by_group": tool_latency_by_group,
-        "events": len(entries),
-    }, ensure_ascii=False, indent=2))
+    print(json.dumps(agg.to_dict(), ensure_ascii=False, indent=2))
     return 0
 
 
